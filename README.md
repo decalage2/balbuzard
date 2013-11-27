@@ -3,23 +3,13 @@ Balbuzard
 
 [Balbuzard](http://www.decalage.info/python/balbuzard) is a package of open-source python tools for malware analysis: 
 
-- **[balbuzard][]** is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs and common file headers. It is easily extensible with patterns, regular expressions and Yara rules.
-- **[bbcrack][]** uses a new algorithm based on patterns of interest to bruteforce typical malware obfuscation such as XOR, ROL, ADD and various combinations. 
-- **[bbtrans][]** can apply any of the transforms from bbcrack (XOR, ROL, ADD and various combinations) to a file.
+- **balbuzard** is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs and common file headers. It is easily extensible with patterns, regular expressions and Yara rules.
+- **bbcrack** uses a new algorithm based on patterns of interest to bruteforce typical malware obfuscation such as XOR, ROL, ADD and various combinations. 
+- **bbtrans** can apply any of the transforms from bbcrack (XOR, ROL, ADD and various combinations) to a file.
 
 See <http://www.decalage.info/python/balbuzard> for more info.
 
-Quick links: [News][] - [Download][] - [License][] - [How to contribute / report bugs](#contribute)  
-
-[balbuzard]: #balbuzard
-[bbcrack]: #bbcrack
-[bbtrans]: #bbtrans
-[news]: #news
-[download]: #download
-[license]: #license
- 
-----------
-<a id="news"></a>
+----------------------------------------------------------------------------------
 
 News
 ----
@@ -32,16 +22,13 @@ Follow all updates and news on Twitter: <https://twitter.com/decalage2>
 - 2007-07-11: first versions of rescan
 - see changelog in source code for more info.
 
-<a id="download"></a>
 
 Download:
 ---------
 
 The archive is available on [the project page on Bitbucket](https://bitbucket.org/decalage/balbuzard/downloads).
 
-
-----------
-<a id="balbuzard"></a>
+----------------------------------------------------------------------------------
 
 balbuzard:
 ----------
@@ -151,9 +138,7 @@ Back in 2007-2008 when I started developing this tool Yara was not yet published
 Besides Yara, the following tools may also be used to search specific patterns within files: [signsrch](http://aluigi.altervista.org/mytoolz.htm#signsrch), [clamsrch](http://code.google.com/p/clamsrch/), [binwalk](http://code.google.com/p/binwalk/).
 
 
-----------
-<a id="bbcrack"></a>
-
+----------------------------------------------------------------------------------
 
 bbcrack:
 --------
@@ -302,24 +287,20 @@ For a good introduction to a number of malware deobfuscation tools, see [Lenny Z
 - xortool: TODO
 
 
-----------
-<a id="bbtrans"></a>
-
+----------------------------------------------------------------------------------
 
 bbtrans:
 --------
 
 TODO
 
-----------
-<a id="contribute"></a>
+----------------------------------------------------------------------------------
 
 How to contribute / report bugs:
 --------------------------------
 
 These are open-source tools developed on my spare time. Any contribution such as code improvements, ideas, bug reports, additional patterns or transforms would be highly appreciated. You may contact me using [this online form](http://www.decalage.info/contact), by e-mail (decalage at laposte.net) or use the [issue page on Bitbucket](https://bitbucket.org/decalage/balbuzard/issues?status=new&status=open) to report bugs/ideas, or clone the project then send me pull requests to suggest changes.
 
-<a id="license"></a>
 
 License
 -------
