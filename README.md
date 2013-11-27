@@ -108,14 +108,15 @@ Example:
 
 Additional patterns can be provided by creating plugin scripts written in Python: each script needs to be named bbz*.py, and placed in the plugins folder. Each plugin script should add a list of Pattern objects to the patterns list, for example:
 
-	patterns += [
-	    # example: a pattern with a simple case-INsensitive string
-	    Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True),
-	    # example: a pattern with a list of strings
-	    Pattern("EXE: section name", [".text", ".data", ".rdata", ".rsrc"])
-	    # example: a pattern with a regular expression, case-insensitive
-	    Pattern_re("Executable filename", r"\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)", nocase=True),
-	    ]
+	:::python
+		patterns += [
+		    # example: a pattern with a simple case-INsensitive string
+		    Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True),
+		    # example: a pattern with a list of strings
+		    Pattern("EXE: section name", [".text", ".data", ".rdata", ".rsrc"])
+		    # example: a pattern with a regular expression, case-insensitive
+		    Pattern_re("Executable filename", r"\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)", nocase=True),
+		    ]
 
 See bbz\_sample\_plugin.py in the plugins folder for more examples.
 
