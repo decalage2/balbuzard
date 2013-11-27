@@ -1,0 +1,10 @@
+magic.py is (C)opyright 2000 Jason Petrone <jp_py@jsnp.net>
+All Rights Reserved
+
+This module was downloaded in 2008 from:
+https://pypi.python.org/pypi/magic/0.1
+http://www.jsnp.net/code/magic.py
+
+Since it was advertised on PyPI and distributed as part of several open-source
+projects, I assume it can be redistributed as long as its copyright is clearly 
+mentioned. If not, please advise and I will remove it.
