@@ -4,25 +4,22 @@ Balbuzard
 `Balbuzard <http://www.decalage.info/python/balbuzard>`_ is a package of
 open-source python tools for malware analysis:
 
--  **`balbuzard <#balbuzard>`_** is a tool to extract patterns of
-   interest from malicious files, such as IP addresses, URLs and common
-   file headers. It is easily extensible with patterns, regular
-   expressions and Yara rules.
--  **`bbcrack <#bbcrack>`_** uses a new algorithm based on patterns of
-   interest to bruteforce typical malware obfuscation such as XOR, ROL,
-   ADD and various combinations.
--  **`bbtrans <#bbtrans>`_** can apply any of the transforms from
-   bbcrack (XOR, ROL, ADD and various combinations) to a file.
+-  **balbuzard** is a tool to extract patterns of interest from
+   malicious files, such as IP addresses, URLs and common file headers.
+   It is easily extensible with patterns, regular expressions and Yara
+   rules.
+-  **bbcrack** uses a new algorithm based on patterns of interest to
+   bruteforce typical malware obfuscation such as XOR, ROL, ADD and
+   various combinations.
+-  **bbtrans** can apply any of the transforms from bbcrack (XOR, ROL,
+   ADD and various combinations) to a file.
 
 See http://www.decalage.info/python/balbuzard for more info.
 
-Quick links: `News <#news>`_ - `Download <#download>`_ -
-`License <#license>`_ - `How to contribute / report bugs <#contribute>`_
+--------------
 
-+------------+
-+------------+
-| News       |
-+------------+
+News
+----
 
 Follow all updates and news on Twitter: https://twitter.com/decalage2
 
@@ -38,10 +35,10 @@ Download:
 The archive is available on `the project page on
 Bitbucket <https://bitbucket.org/decalage/balbuzard/downloads>`_.
 
-+------------+
-+------------+
-| balbuzard: |
-+------------+
+--------------
+
+balbuzard:
+----------
 
 balbuzard is a malware analysis tool to extract patterns of interest
 from malicious files, such as IP addresses, URLs and common file
@@ -201,10 +198,10 @@ patterns within files:
 `clamsrch <http://code.google.com/p/clamsrch/>`_,
 `binwalk <http://code.google.com/p/binwalk/>`_.
 
-+------------+
-+------------+
-| bbcrack:   |
-+------------+
+--------------
+
+bbcrack:
+--------
 
 bbcrack (Balbucrack) is a tool to crack malware obfuscation such as XOR,
 ROL, ADD (and many combinations), by bruteforcing all possible keys and
@@ -422,20 +419,17 @@ or `this presentation <http://bit.ly/15bI47C>`_ from Michael Barr.
 -  `unxor <https://github.com/tomchop/unxor/>`_: TODO
 -  xortool: TODO
 
-+------------+
-+------------+
-| bbtrans:   |
-+------------+
+--------------
+
+bbtrans:
+--------
 
 TODO
 
-+------------+
-+------------+
-| How to     |
-| contribute |
-| / report   |
-| bugs:      |
-+------------+
+--------------
+
+How to contribute / report bugs:
+--------------------------------
 
 These are open-source tools developed on my spare time. Any contribution
 such as code improvements, ideas, bug reports, additional patterns or
