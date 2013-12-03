@@ -69,10 +69,12 @@ __version__ = '0.12'
 
 #------------------------------------------------------------------------------
 # TODO:
+# + option to choose which plugins to load: all (default), none, python or yara
+#   only
 # + option to use the Yara-python engine for searching (translating balbuzard
 #   patterns to yara at runtime)
 # - option to support Unicode strings? (need to check 2 alignments and 2 byte
-#   orders, or simply insert \x00 between all chars)
+#   orders, or simply insert \x00 between all chars, e.g. 'T\x00E\x00S\x00T')
 # + improve patterns to avoid some false positives: maybe use pefile or magic.py ?
 # - pattern: validation function to be called to verify matches (may be a regex
 #   or any python function returning a bool)
@@ -96,7 +98,7 @@ __version__ = '0.12'
 
 #--- IMPORTS ------------------------------------------------------------------
 
-import sys, re, os, os.path, optparse, glob, zipfile, time, string, fnmatch
+import sys, re, os, os.path, optparse, glob, zipfile, time, string, fnmatch, imp
 
 # try to import magic.py - see http://www.jsnp.net/code/magic.py or PyPI/magic
 try:
@@ -464,8 +466,16 @@ def get_main_dir():
 
 #=== MAIN =====================================================================
 
+# get main directory where this script is located:
+main_dir = get_main_dir()
+# with python 2.6+, make it a relative path:
+try:
+    main_dir = os.path.relpath(main_dir)
+except:
+    pass
+
 # load patterns
-patfile = os.path.join(get_main_dir(), 'patterns.py')
+patfile = os.path.join(main_dir, 'patterns.py')
 execfile(patfile)
 
 
@@ -494,7 +504,7 @@ if __name__ == '__main__':
         sys.exit()
 
     # load plugins
-    plugins_dir = os.path.join(get_main_dir(), 'plugins')
+    plugins_dir = os.path.join(main_dir, 'plugins')
     for f in rglob(plugins_dir, 'bbz*.py'): # glob.iglob('plugins/bbz*.py'):
         print 'Loading plugin from', f
         execfile(f)
