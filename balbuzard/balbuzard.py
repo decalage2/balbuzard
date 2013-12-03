@@ -69,10 +69,14 @@ __version__ = '0.12'
 
 #------------------------------------------------------------------------------
 # TODO:
+# + add yara plugins support to Balbuzard.count and scan_profiling
+# + merge Balbuzard.scan_hexdump and short
+# + batch mode to scan several files when using wildcards
 # + option to choose which plugins to load: all (default), none, python or yara
 #   only
 # + option to use the Yara-python engine for searching (translating balbuzard
 #   patterns to yara at runtime)
+# - Yara plugins: keep track of the filename containing each set of Yara rules
 # - option to support Unicode strings? (need to check 2 alignments and 2 byte
 #   orders, or simply insert \x00 between all chars, e.g. 'T\x00E\x00S\x00T')
 # + improve patterns to avoid some false positives: maybe use pefile or magic.py ?
