@@ -330,40 +330,37 @@ class Balbuzard (object):
             if count:
                 yield pattern, count
 
-    def scan_hexdump (self, data):
+    def scan_display (self, data, hexdump=False):
         """
         Scans data for all patterns, displaying an hexadecimal dump for each
-        match on the console.
+        match on the console (if hexdump=True), or one line for each
+        match (if hexdump=False).
         """
         for pattern, matches in self.scan(data):
-            print "-"*79
-            print "%s:" % pattern.name
+            if hexdump:
+                print "-"*79
+                print "%s:" % pattern.name
             for index, match in matches:
-                print "at %08X: %s" % (index, repr(match))
-                # 5 lines of hexadecimal dump around the pattern: 2 lines = 32 bytes
-                start = max(index-32, 0) & 0xFFFFFFF0
-                index_end = index + len(match)
-                end = min(index_end+32+15, len(data)) & 0xFFFFFFF0
-                length = end-start
-                #print start, end, length
-                print hexdump3(data[start:end], length=16, startindex=start)
-                print ""
+                if hexdump:
+                    print "at %08X: %s" % (index, repr(match))
+                    # 5 lines of hexadecimal dump around the pattern: 2 lines = 32 bytes
+                    start = max(index-32, 0) & 0xFFFFFFF0
+                    index_end = index + len(match)
+                    end = min(index_end+32+15, len(data)) & 0xFFFFFFF0
+                    length = end-start
+                    #print start, end, length
+                    print hexdump3(data[start:end], length=16, startindex=start)
+                    print ""
+                else:
+                    # limit matched string display to 50 chars:
+                    m = repr(match)
+                    if len(m)> 50:
+                        m = m[:24]+'...'+m[-23:]
+                    print "at %08X: %s - %s" % (index, pattern.name, m)
+
     ##            if item == "EXE MZ headers" and MAGIC:
     ##                # Check if it's really a EXE header
     ##                print "Magic: %s\n" % magic.whatis(data[m.start():])
-
-    def scan_short (self, data):
-        """
-        Scans data for all patterns, displaying one line for each
-        match on the console.
-        """
-        for pattern, matches in self.scan(data):
-            for index, match in matches:
-                # limit matched string display to 50 chars:
-                m = repr(match)
-                if len(m)> 50:
-                    m = m[:24]+'...'+m[-23:]
-                print "at %08X: %s - %s" % (index, pattern.name, m)
 
 
 
@@ -538,9 +535,6 @@ if __name__ == '__main__':
         print "Filetype according to magic: %s\n" % magic.whatis(data)
 
     bbz = Balbuzard(patterns, yara_rules=yara_rules)
-    if options.short:
-        bbz.scan_short(data)
-    else:
-        bbz.scan_hexdump(data)
+    bbz.scan_display(data, hexdump=not options.short)
 
 # This was coded while listening to The National "Boxer".
