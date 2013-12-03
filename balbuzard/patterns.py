@@ -45,6 +45,7 @@ __version__ = '0.01'
 
 #------------------------------------------------------------------------------
 # TODO:
+# + declare each pattern as a variable, used to create lists of patterns
 # + move patterns for bbcrack and bbharvest here
 # + improve regex list with http://regexlib.com
 # - extract list of common strings found in EXE files
