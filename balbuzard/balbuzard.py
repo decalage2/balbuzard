@@ -65,6 +65,7 @@ __version__ = '0.12'
 #                      - improved OLE2 pattern
 # 2013-12-03 v0.13 PL: - moved patterns to separate file patterns.py
 #                      - fixed issue when balbuzard launched from another dir
+#                      - added CSV output
 
 
 #------------------------------------------------------------------------------
@@ -103,6 +104,7 @@ __version__ = '0.12'
 #--- IMPORTS ------------------------------------------------------------------
 
 import sys, re, os, os.path, optparse, glob, zipfile, time, string, fnmatch, imp
+import csv
 
 # try to import magic.py - see http://www.jsnp.net/code/magic.py or PyPI/magic
 try:
@@ -330,19 +332,26 @@ class Balbuzard (object):
             if count:
                 yield pattern, count
 
-    def scan_display (self, data, hexdump=False):
+    def scan_display (self, data, filename, hexdump=False, csv_writer=None):
         """
         Scans data for all patterns, displaying an hexadecimal dump for each
         match on the console (if hexdump=True), or one line for each
         match (if hexdump=False).
         """
+        if csv_writer is not None:
+            csv_writer.writerow(['Filename', 'Index', 'Pattern name',
+                'Found string', 'Length'])
         for pattern, matches in self.scan(data):
             if hexdump:
                 print "-"*79
                 print "%s:" % pattern.name
             for index, match in matches:
+                # limit matched string display to 50 chars:
+                m = repr(match)
+                if len(m)> 50:
+                    m = m[:24]+'...'+m[-23:]
                 if hexdump:
-                    print "at %08X: %s" % (index, repr(match))
+                    print "at %08X: %s" % (index, m)
                     # 5 lines of hexadecimal dump around the pattern: 2 lines = 32 bytes
                     start = max(index-32, 0) & 0xFFFFFFF0
                     index_end = index + len(match)
@@ -352,11 +361,10 @@ class Balbuzard (object):
                     print hexdump3(data[start:end], length=16, startindex=start)
                     print ""
                 else:
-                    # limit matched string display to 50 chars:
-                    m = repr(match)
-                    if len(m)> 50:
-                        m = m[:24]+'...'+m[-23:]
                     print "at %08X: %s - %s" % (index, pattern.name, m)
+                if csv_writer is not None:
+                    csv_writer.writerow([filename, '%08X' % index, pattern.name,
+                        m, len(match)])
 
     ##            if item == "EXE MZ headers" and MAGIC:
     ##                # Check if it's really a EXE header
@@ -489,8 +497,8 @@ if __name__ == '__main__':
     parser = optparse.OptionParser(usage=usage)
 ##    parser.add_option('-o', '--outfile', dest='outfile',
 ##        help='output file')
-##    parser.add_option('-c', '--csv', dest='csv',
-##        help='export results to CSV file')
+    parser.add_option('-c', '--csv', dest='csv',
+        help='export results to a CSV file')
     parser.add_option("-s", action="store_true", dest="short",
         help='short display, without hex view.')
     parser.add_option("-z", "--zip", dest='zip_password', type='str', default=None,
@@ -517,6 +525,13 @@ if __name__ == '__main__':
             print 'Loading yara plugin from', f
             yara_rules.append(yara.compile(f))
 
+    if options.csv:
+        print 'Writing output to CSV file: %s' % options.csv
+        csvfile = open(options.csv, 'wb')
+        csv_writer = csv.writer(csvfile)
+    else:
+        csv_writer = None
+
 
     fname = args[0]
     if options.zip_password is not None:
@@ -524,7 +539,8 @@ if __name__ == '__main__':
         pwd = options.zip_password
         print 'Opening zip archive %s with password "%s"' % (fname, pwd)
         z = zipfile.ZipFile(fname, 'r')
-        print 'Opening first file:', z.infolist()[0].filename
+        fname = z.infolist()[0].filename
+        print 'Opening first file:', fname
         data = z.read(z.infolist()[0], pwd)
     else:
         # normal file
@@ -535,6 +551,10 @@ if __name__ == '__main__':
         print "Filetype according to magic: %s\n" % magic.whatis(data)
 
     bbz = Balbuzard(patterns, yara_rules=yara_rules)
-    bbz.scan_display(data, hexdump=not options.short)
+    bbz.scan_display(data, fname, hexdump=not options.short, csv_writer=csv_writer)
+
+    if options.csv:
+        csvfile.close()
+
 
 # This was coded while listening to The National "Boxer".
