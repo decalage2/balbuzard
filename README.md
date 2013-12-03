@@ -43,6 +43,7 @@ But as soon as a file is larger than a few kilobytes, this can become very tedio
 
 - search for string or regular expression patterns
 - default set of patterns for malware analysis
+- includes Yara signatures from the [Malware Analyst's Cookbook](https://code.google.com/p/malwarecookbook) (capabilities, packer and magic)
 - easily extensible with new patterns in python scripts and Yara rules
 - optional use of the Yara engine and Yara rules as patterns
 - command-line tool or python module
