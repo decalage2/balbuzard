@@ -64,6 +64,7 @@ __version__ = '0.12'
 # 2013-08-28 v0.12 PL: - plugins can now be in subfolders
 #                      - improved OLE2 pattern
 # 2013-12-03 v0.13 PL: - moved patterns to separate file patterns.py
+#                      - fixed issue when balbuzard launched from another dir
 
 
 #------------------------------------------------------------------------------
@@ -433,10 +434,39 @@ def rglob (path, pattern='*.*'):
         for f in fnmatch.filter(files, pattern)]
 
 
+def main_is_frozen():
+    """
+    To determine whether the script is launched from the interpreter or if it
+    is an executable compiled with py2exe.
+    See http://www.py2exe.org/index.cgi/HowToDetermineIfRunningFromExe
+    """
+    return (hasattr(sys, "frozen") # new py2exe
+        or hasattr(sys, "importers") # old py2exe
+        or imp.is_frozen("__main__")) # tools/freeze
+
+
+def get_main_dir():
+    """
+    To determine the directory where the main script is located.
+    Works if it is launched from the interpreter or if it is an executable
+    compiled with py2exe.
+    See http://www.py2exe.org/index.cgi/HowToDetermineIfRunningFromExe
+    """
+    if main_is_frozen():
+        # script compiled with py2exe:
+        return os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        # else the script is sys.argv[0]
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+
+
+
+
 #=== MAIN =====================================================================
 
 # load patterns
-execfile('patterns.py')
+patfile = os.path.join(get_main_dir(), 'patterns.py')
+execfile(patfile)
 
 
 
@@ -464,14 +494,15 @@ if __name__ == '__main__':
         sys.exit()
 
     # load plugins
-    for f in rglob('plugins', 'bbz*.py'): # glob.iglob('plugins/bbz*.py'):
+    plugins_dir = os.path.join(get_main_dir(), 'plugins')
+    for f in rglob(plugins_dir, 'bbz*.py'): # glob.iglob('plugins/bbz*.py'):
         print 'Loading plugin from', f
         execfile(f)
 
     # load yara plugins
     if YARA:
         yara_rules = []
-        for f in rglob('plugins', '*.yara'):  #glob.iglob('plugins/*.yara'):  # or bbz*.yara?
+        for f in rglob(plugins_dir, '*.yara'):  #glob.iglob('plugins/*.yara'):  # or bbz*.yara?
             print 'Loading yara plugin from', f
             yara_rules.append(yara.compile(f))
 
