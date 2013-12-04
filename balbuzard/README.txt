@@ -23,7 +23,7 @@ News
 
 Follow all updates and news on Twitter: https://twitter.com/decalage2
 
--  2013-08-28 v0.12: Initial release of Balbuzard and bbcrack
+-  2013-12-04 v0.14: Initial release of Balbuzard and bbcrack
 -  2011-05-06: added bruteforce functions (bbcrack)
 -  2008-06-06: first public release as rescan for SSTIC08
 -  2007-07-11: first versions of rescan
@@ -93,8 +93,8 @@ be a regular expression matching IP addresses, e-mail addresses or more
 complex patterns.
 
 Each found pattern is reported with its position, its length and value.
-By default a short hex dump is displayed with a few bytes around the
-pattern.
+With the -v option, a short hex dump can be displayed with a few bytes
+around the pattern.
 
 The list of patterns to look for can be easily extended by adding a
 python script in the plugins directory (see below).
@@ -104,20 +104,21 @@ Usage
 
 ::
 
-    Usage: balbuzard.py [options] <filename>
+    Usage: balbuzard.py [options] <filename> [filename2 ...]
 
     Options:
       -h, --help            show this help message and exit
-      -s                    short display, without hex view.
+      -c CSV, --csv=CSV     export results to a CSV file
+      -v                    verbose display, with hex view.
       -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
                             if the file is a zip archive, open first file from it,
-                            using the provided password (requires Python 2.6+)
+                            using the provided password (requires Python 2.6+)  
 
 Example:
 
 ::
 
-    C:\balbuzard>balbuzard.py test.exe
+    C:\balbuzard>balbuzard.py -v test.exe
     Loading plugin from plugins\bbz_sample_plugin.py
     Opening file test.exe
     Filetype according to magic: application/x-ms-dos-executable
@@ -142,6 +143,19 @@ Example:
     0290   65 42 6F 78 41 00 55 53 45 52 33 32 2E 64 6C 6C    eBoxA.USER32.dll
     02A0   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
     02B0   54 69 6E 79 20 45 58 45 00 00 00 00 54 68 69 73    Tiny EXE....This
+
+Using wildcards, it is also possible to scan several files in a folder:
+
+::
+
+    >balbuzard.py samples\*.bin
+
+With the -c option, results can be written in a CSV file, suitable for
+further analysis:
+
+::
+
+    >balbuzard.py samples\*.bin -c results.csv
 
 How to extend the list of patterns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
