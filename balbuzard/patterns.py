@@ -1,5 +1,5 @@
 """
-balbuzard patterns - v0.01 2013-12-03 Philippe Lagadec
+balbuzard patterns - v0.02 2013-12-04 Philippe Lagadec
 
 This file contains pattern definitions for the Balbuzard tools.
 
@@ -37,15 +37,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-__version__ = '0.01'
+__version__ = '0.02'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
 # 2013-12-03 v0.01 PL: - 1st version, moved patterns from balbuzard
+# 2013-12-04 v0.02 PL: - declare each pattern as a variable, used to create
+#                        lists of patterns
 
 #------------------------------------------------------------------------------
 # TODO:
-# + declare each pattern as a variable, used to create lists of patterns
 # + move patterns for bbcrack and bbharvest here
 # + improve regex list with http://regexlib.com
 # - extract list of common strings found in EXE files
@@ -62,45 +63,74 @@ __version__ = '0.01'
 
 #=== PATTERNS =================================================================
 
-# Patterns for balbuzard:
-patterns = [
-    # NOTE: '(?i)' makes a regex case-insensitive
+# NOTE: '(?i)' makes a regex case-insensitive
 ##    Pattern_re("IP addresses", r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", weight=10),
-    Pattern_re("IPv4 address", r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", weight=100),
-    Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*[^\.\,\)\(\s]', weight=10),
+pat_ipv4 = Pattern_re("IPv4 address", r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", weight=100)
+pat_url = Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*[^\.\,\)\(\s]', weight=10)
 ##    Pattern_re('e-mail address', r'([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=2119
-    Pattern_re('e-mail address', r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b', weight=10), # adapted from http://www.regular-expressions.info/email.html
-    Pattern_re('domain name', r'(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=1319
+pat_email = Pattern_re('e-mail address', r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b', weight=10) # adapted from http://www.regular-expressions.info/email.html
+pat_domain = Pattern_re('domain name', r'(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)', weight=10) # source: http://regexlib.com/REDetails.aspx?regexp_id=1319
 
-    Pattern("EXE MZ headers", "MZ|ZM".split('|')),
-    Pattern("EXE PE headers", "PE"),
-    Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", weight=100), # (?s) sets the DOTALL flag, so that dot matches any character
-    Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=10000),
-    Pattern_re("Executable filename", r"\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)", nocase=True, weight=10),
-    Pattern("EXE: UPX header", "UPX"),
-    Pattern("EXE: section name", ".text|.data|.rdata|.rsrc".split('|'), nocase=True, weight=10), #nocase?
-    Pattern("EXE: packed with Petite", ".petite", nocase=True, weight=10), #nocase?
-    Pattern("EXE: interesting Win32 function names", "WriteFile|IsDebuggerPresent|RegSetValue|CreateRemoteThread".split('|'), weight=10000),  #nocase?
-    Pattern("EXE: interesting WinSock function names", "WS2_32.dll|WSASocket|WSASend|WSARecv".split('|'), nocase=True, weight=10000), #nocase?
-    Pattern("EXE: possibly compiled with Microsoft Visual C++", "Microsoft Visual C++", weight=10000),
+pat_mz = Pattern("EXE MZ headers", "MZ|ZM".split('|'))
+pat_pe = Pattern("EXE PE headers", "PE")
+pat_mzpe = Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", weight=100) # (?s) sets the DOTALL flag, so that dot matches any character
+pat_exemsg = Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=10000)
+pat_exe_fname = Pattern_re("Executable filename", r"\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)", nocase=True, weight=10)
+pat_upx = Pattern("EXE: UPX header", "UPX")
+pat_section = Pattern("EXE: section name", ".text|.data|.rdata|.rsrc".split('|'), nocase=True, weight=10) #nocase?
+pat_petite = Pattern("EXE: packed with Petite", ".petite", nocase=True, weight=10) #nocase?
+pat_win32 = Pattern("EXE: interesting Win32 function names", "WriteFile|IsDebuggerPresent|RegSetValue|CreateRemoteThread".split('|'), weight=10000)  #nocase?
+pat_winsock = Pattern("EXE: interesting WinSock function names", "WS2_32.dll|WSASocket|WSASend|WSARecv".split('|'), nocase=True, weight=10000) #nocase?
+pat_msvcpp = Pattern("EXE: possibly compiled with Microsoft Visual C++", "Microsoft Visual C++", weight=10000)
 
-    Pattern("Interesting registry keys", "CurrentVersion\\Run|UserInit".split('|'), weight=10000), #nocase?
-    Pattern("Interesting file names", "\\drivers\\etc\\hosts|cmd\.exe|\\Start Menu\\Programs\\Startup".split('|'), nocase=True, weight=10000),
-    Pattern("Interesting keywords", "password|login|pwd|administrator|admin|root|smtp|pop|ftp|ssh|icq|backdoor|vmware".split('|'), nocase=True, weight=100), # removed http
+pat_regkeys = Pattern("Interesting registry keys", "CurrentVersion\\Run|UserInit".split('|'), weight=10000) #nocase?
+pat_filenames = Pattern("Interesting file names", "\\drivers\\etc\\hosts|cmd\.exe|\\Start Menu\\Programs\\Startup".split('|'), nocase=True, weight=10000)
+pat_keywords = Pattern("Interesting keywords", "password|login|pwd|administrator|admin|root|smtp|pop|ftp|ssh|icq|backdoor|vmware".split('|'), nocase=True, weight=100) # removed http
     #Pattern_re("NOP instructions (possible shellcode)", r"\x90{4,}"), # this regex matches 4 NOPs or more
 
-    Pattern("Possible OLE2 header (D0CF)", "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", weight=10),
+pat_ole2 = Pattern("Possible OLE2 header (e.g. MS Office documents)", "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", weight=10)
     #ref: http://msdn.microsoft.com/en-us/library/dd941946.aspx
-    Pattern("Possible VBA macros", "VBA"), #nocase?
+pat_vba = Pattern("Possible VBA macros", "VBA") #nocase?
 
-    Pattern('Possible Flash header', 'SWF|FWS'.split('|')),
-    Pattern('Flash OLE object 1', 'ShockwaveFlash.ShockwaveFlash', weight=10),
-    Pattern('Flash OLE object 2', 'S\x00h\x00o\x00c\x00k\x00w\x00a\x00v\x00e\x00F\x00l\x00a\x00s\x00h', weight=10), # warning: this is unicode
+pat_flash = Pattern('Possible Flash header', 'SWF|FWS'.split('|'))
+pat_flashobj1 = Pattern('Flash OLE object 1', 'ShockwaveFlash.ShockwaveFlash', weight=10)
+pat_flashobj2 = Pattern('Flash OLE object 2', 'S\x00h\x00o\x00c\x00k\x00w\x00a\x00v\x00e\x00F\x00l\x00a\x00s\x00h', weight=10) # warning: this is unicode
 
-    Pattern('Possible PDF header', '%PDF-', weight=10),
-    Pattern('Possible PDF end of file marker', '%EOF', weight=10),
+pat_pdf_hdr = Pattern('Possible PDF header', '%PDF-', weight=10)
+pat_pdf_eof = Pattern('Possible PDF end of file marker', '%EOF', weight=10)
 
-    Pattern_re('Hex blob', r'([A-F0-9][A-F0-9]|[a-f0-9][a-f0-9]){16,}', weight=1),
-    Pattern_re('Base64 blob', r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', weight=1),
+pat_hex = Pattern_re('Hex blob', r'([A-F0-9][A-F0-9]|[a-f0-9][a-f0-9]){16,}', weight=1)
+pat_b64 = Pattern_re('Base64 blob', r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', weight=1)
+
+#------------------------------------------------------------------------------
+# Patterns for balbuzard:
+
+patterns = [
+    pat_ipv4,
+    pat_url,
+    pat_email,
+    pat_domain,
+    pat_mz,
+    pat_pe,
+    pat_mzpe,
+    pat_exemsg,
+    pat_exe_fname,
+    pat_upx,
+    pat_section,
+    pat_petite,
+    pat_win32,
+    pat_winsock,
+    pat_msvcpp,
+    pat_regkeys,
+    pat_filenames,
+    pat_keywords,
+    pat_ole2,
+    pat_vba,
+    pat_flash,
+    pat_flashobj1,
+    pat_flashobj2,
+    pat_pdf_hdr,
+    pat_pdf_eof,
+    pat_hex,
+    pat_b64,
     ]
-
