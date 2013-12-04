@@ -67,6 +67,7 @@ __version__ = '0.14'
 #                      - fixed issue when balbuzard launched from another dir
 #                      - added CSV output
 # 2013-12-04 v0.14 PL: - can now scan several files from command line args
+#                      - now short display is default, -v for hex view
 
 
 #------------------------------------------------------------------------------
@@ -500,8 +501,8 @@ if __name__ == '__main__':
 ##        help='output file')
     parser.add_option('-c', '--csv', dest='csv',
         help='export results to a CSV file')
-    parser.add_option("-s", action="store_true", dest="short",
-        help='short display, without hex view.')
+    parser.add_option("-v", action="store_true", dest="verbose",
+        help='verbose display, with hex view.')
     parser.add_option("-z", "--zip", dest='zip_password', type='str', default=None,
         help='if the file is a zip archive, open first file from it, using the provided password (requires Python 2.6+)')
 
@@ -538,27 +539,28 @@ if __name__ == '__main__':
 
 
     # scan each file provided as argument:
-    for fname in args:
-        print "="*79
-        print "File: %s\n" % fname
-        if options.zip_password is not None:
-            # extract 1st file from zip archive, using password
-            pwd = options.zip_password
-            print 'Opening zip archive %s with password "%s"' % (fname, pwd)
-            z = zipfile.ZipFile(fname, 'r')
-            fname = z.infolist()[0].filename
-            print 'Opening first file in zip archive:', fname
-            data = z.read(z.infolist()[0], pwd)
-        else:
-            # normal file
-            print 'Opening file', fname
-            data = open(fname, 'rb').read()
+    for arg in args:
+        for fname in glob.iglob(arg):
+            print "="*79
+            print "File: %s\n" % fname
+            if options.zip_password is not None:
+                # extract 1st file from zip archive, using password
+                pwd = options.zip_password
+                print 'Opening zip archive %s with password "%s"' % (fname, pwd)
+                z = zipfile.ZipFile(fname, 'r')
+                fname = z.infolist()[0].filename
+                print 'Opening first file in zip archive:', fname
+                data = z.read(z.infolist()[0], pwd)
+            else:
+                # normal file
+                print 'Opening file', fname
+                data = open(fname, 'rb').read()
 
-        if MAGIC:
-            print "Filetype according to magic: %s\n" % magic.whatis(data)
+            if MAGIC:
+                print "Filetype according to magic: %s\n" % magic.whatis(data)
 
-        bbz = Balbuzard(patterns, yara_rules=yara_rules)
-        bbz.scan_display(data, fname, hexdump=not options.short, csv_writer=csv_writer)
+            bbz = Balbuzard(patterns, yara_rules=yara_rules)
+            bbz.scan_display(data, fname, hexdump=options.verbose, csv_writer=csv_writer)
 
     # close CSV file
     if options.csv:
