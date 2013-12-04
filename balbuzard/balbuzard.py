@@ -1,5 +1,5 @@
 """
-balbuzard - v0.12 2013-08-28 Philippe Lagadec
+balbuzard - v0.14 2013-12-04 Philippe Lagadec
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
@@ -7,7 +7,7 @@ etc).
 
 For more info and updates: http://www.decalage.info/balbuzard
 
-usage: balbuzard <file>
+usage: balbuzard [options] <file> [file2 ... fileN]
 
 
 balbuzard is copyright (c) 2007-2013, Philippe Lagadec (http://www.decalage.info)
@@ -34,7 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-__version__ = '0.12'
+__version__ = '0.14'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -66,6 +66,7 @@ __version__ = '0.12'
 # 2013-12-03 v0.13 PL: - moved patterns to separate file patterns.py
 #                      - fixed issue when balbuzard launched from another dir
 #                      - added CSV output
+# 2013-12-04 v0.14 PL: - can now scan several files from command line args
 
 
 #------------------------------------------------------------------------------
@@ -338,9 +339,6 @@ class Balbuzard (object):
         match on the console (if hexdump=True), or one line for each
         match (if hexdump=False).
         """
-        if csv_writer is not None:
-            csv_writer.writerow(['Filename', 'Index', 'Pattern name',
-                'Found string', 'Length'])
         for pattern, matches in self.scan(data):
             if hexdump:
                 print "-"*79
@@ -363,8 +361,11 @@ class Balbuzard (object):
                 else:
                     print "at %08X: %s - %s" % (index, pattern.name, m)
                 if csv_writer is not None:
-                    csv_writer.writerow([filename, '%08X' % index, pattern.name,
+                    #['Filename', 'Index', 'Pattern name', 'Found string', 'Length']
+                    csv_writer.writerow([filename, '0x%08X' % index, pattern.name,
                         m, len(match)])
+        # blank line between each file:
+        print ''
 
     ##            if item == "EXE MZ headers" and MAGIC:
     ##                # Check if it's really a EXE header
@@ -493,7 +494,7 @@ execfile(patfile)
 
 if __name__ == '__main__':
 
-    usage = 'usage: %prog [options] <filename>'
+    usage = 'usage: %prog [options] <filename> [filename2 ...]'
     parser = optparse.OptionParser(usage=usage)
 ##    parser.add_option('-o', '--outfile', dest='outfile',
 ##        help='output file')
@@ -525,34 +526,41 @@ if __name__ == '__main__':
             print 'Loading yara plugin from', f
             yara_rules.append(yara.compile(f))
 
+    # open CSV file
     if options.csv:
         print 'Writing output to CSV file: %s' % options.csv
         csvfile = open(options.csv, 'wb')
         csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(['Filename', 'Index', 'Pattern name',
+            'Found string', 'Length'])
     else:
         csv_writer = None
 
 
-    fname = args[0]
-    if options.zip_password is not None:
-        # extract 1st file from zip archive, using password
-        pwd = options.zip_password
-        print 'Opening zip archive %s with password "%s"' % (fname, pwd)
-        z = zipfile.ZipFile(fname, 'r')
-        fname = z.infolist()[0].filename
-        print 'Opening first file:', fname
-        data = z.read(z.infolist()[0], pwd)
-    else:
-        # normal file
-        print 'Opening file', fname
-        data = open(fname, 'rb').read()
+    # scan each file provided as argument:
+    for fname in args:
+        print "="*79
+        print "File: %s\n" % fname
+        if options.zip_password is not None:
+            # extract 1st file from zip archive, using password
+            pwd = options.zip_password
+            print 'Opening zip archive %s with password "%s"' % (fname, pwd)
+            z = zipfile.ZipFile(fname, 'r')
+            fname = z.infolist()[0].filename
+            print 'Opening first file in zip archive:', fname
+            data = z.read(z.infolist()[0], pwd)
+        else:
+            # normal file
+            print 'Opening file', fname
+            data = open(fname, 'rb').read()
 
-    if MAGIC:
-        print "Filetype according to magic: %s\n" % magic.whatis(data)
+        if MAGIC:
+            print "Filetype according to magic: %s\n" % magic.whatis(data)
 
-    bbz = Balbuzard(patterns, yara_rules=yara_rules)
-    bbz.scan_display(data, fname, hexdump=not options.short, csv_writer=csv_writer)
+        bbz = Balbuzard(patterns, yara_rules=yara_rules)
+        bbz.scan_display(data, fname, hexdump=not options.short, csv_writer=csv_writer)
 
+    # close CSV file
     if options.csv:
         csvfile.close()
 

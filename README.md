@@ -46,14 +46,15 @@ But as soon as a file is larger than a few kilobytes, this can become very tedio
 - includes Yara signatures from the [Malware Analyst's Cookbook](https://code.google.com/p/malwarecookbook) (capabilities, packer and magic)
 - easily extensible with new patterns in python scripts and Yara rules
 - optional use of the Yara engine and Yara rules as patterns
+- CSV output
+- batch analysis of multiple files/folders
 - command-line tool or python module
 - can open malware in password-protected zip files without writing to disk
 - pure python 2.x, no dependency or compilation
 
 Coming soon:
 
-- CSV and HTML outputs
-- batch analysis of multiple files/folders
+- XML and HTML outputs
 - Unicode support
 
 ### How does it work?
