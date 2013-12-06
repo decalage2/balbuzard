@@ -95,6 +95,8 @@ __version__ = '0.14'
 #   name and matched value => make it default?
 # - options for CSV and XML outputs
 # - export to OpenIOC?
+# ? zip file: open all files instead of only the 1st one, or add an option to
+#   specify the filename(s) to open within the zip, with wildcards?
 
 
 # ISSUES:
