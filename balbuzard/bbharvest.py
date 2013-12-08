@@ -1,5 +1,5 @@
 """
-bbharvest - v0.01 2013-12-06 Philippe Lagadec
+bbharvest - v0.02 2013-12-08 Philippe Lagadec
 
 bbharvest is a tool to analyse malware that uses obfuscation such as XOR, ROL,
 ADD (and many combinations) to hide information such as IP addresses, domain
@@ -38,27 +38,49 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.01'
+__version__ = '0.02'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
 # 2013-12-06 v0.01 PL: - 1st version, moved code from bbcrack
+# 2013-12-08 v0.02 PL: - added CSV output, renamed multi_trans to harvest
 
 
 #------------------------------------------------------------------------------
 # TODO:
+# + merge patterns list with balbuzard in patterns.py
+# + filter out IPv4 bogon addresses: http://www.team-cymru.org/Services/Bogons/bogon-dd.html
+#   + len>7
+# + filter out e-mail addresses if too short
+# + add more patterns with typical strings found in executables
 # + avoid duplicate code in main, using functions in bbcrack
 # + plugin dir to load user transforms and patterns (using exec or import?)
 # + harvest mode: option to save copy of every matching file
-# - csv output for stage1+2 or harvest mode
+# + csv output for profiling mode
+# + main: same fix as balbuzard for fname in zip
 # - for some patterns such as e-mail, would be good to have a validation function
 #   on top of regex to filter out false positives. for example using tldextract
 #   or list of TLDs: http://data.iana.org/TLD/tlds-alpha-by-domain.txt.
 
+# BOGON IP ADDRESS RANGES:
+##0.0.0.0 255.0.0.0
+##10.0.0.0 255.0.0.0
+##100.64.0.0 255.192.0.0
+##127.0.0.0 255.0.0.0
+##169.254.0.0 255.255.0.0
+##172.16.0.0 255.240.0.0
+##192.0.0.0 255.255.255.0
+##192.0.2.0 255.255.255.0
+##192.168.0.0 255.255.0.0
+##198.18.0.0 255.254.0.0
+##198.51.100.0 255.255.255.0
+##203.0.113.0 255.255.255.0
+##224.0.0.0 240.0.0.0
+##240.0.0.0 240.0.0.0
 
 #--- IMPORTS ------------------------------------------------------------------
 
-import sys, os, time, optparse, zipfile
+import sys, os, time, optparse, zipfile, csv
 
 from bbcrack import *
 
@@ -102,7 +124,8 @@ harvest_patterns = [
 
 #--- FUNCTIONS ----------------------------------------------------------------
 
-def multi_trans (raw_data, transform_classes, profiling=False):
+def harvest (raw_data, transform_classes, filename, profiling=False,
+    csv_writer=None):
     """
     apply all transforms to raw_data, and extract all patterns of interest
     (Slow, but useful when a file uses multiple transforms.)
@@ -124,8 +147,17 @@ def multi_trans (raw_data, transform_classes, profiling=False):
                 for pattern, matches in bbz.scan(data):
                     for index, match in matches:
                         if len(match)>3:
-                            print '%s: %s at index %X, string=%s' % (
-                                transform.shortname, pattern.name, index, repr(match))
+                            # limit matched string display to 50 chars:
+                            m = repr(match)
+                            if len(m)> 50:
+                                m = m[:24]+'...'+m[-23:]
+                            print '%s: at %08X %s, string=%s' % (
+                                transform.shortname, index, pattern.name, m)
+                            if csv_writer is not None:
+                                #['Filename', 'Transform', 'Index', 'Pattern name', 'Found string', 'Length']
+                                csv_writer.writerow([filename,
+                                    transform.shortname, '0x%08X' % index,
+                                    pattern.name, m, len(match)])
         print '                                      '
     else:
         # same code, with profiling:
@@ -173,6 +205,8 @@ if __name__ == '__main__':
         help='select transforms level 1, 2 or 3')
 ##    parser.add_option('-s', '--save', dest='save', type='int', default=10,
 ##        help='number of transforms to save to files after stage 2')
+    parser.add_option('-c', '--csv', dest='csv',
+        help='export results to a CSV file')
     parser.add_option("-t", "--transform", dest='transform', type='str', default=None,
         help='only check specific transforms (comma separated list, or "-t list" to display all available transforms)')
     parser.add_option("-z", "--zip", dest='zip_password', type='str', default=None,
@@ -232,8 +266,19 @@ if __name__ == '__main__':
         if len(transform_classes) == 0:
             sys.exit('Transform "%s" does not exist. Use "-t list" to see all available transforms.' % options.transform)
 
-    # harvest mode, for multiple transformations
-    multi_trans(raw_data, transform_classes, profiling=options.profiling)
+    # open CSV file
+    if options.csv:
+        print 'Writing output to CSV file: %s' % options.csv
+        csvfile = open(options.csv, 'wb')
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(['Filename', 'Transform', 'Index', 'Pattern name',
+            'Found string', 'Length'])
+    else:
+        csv_writer = None
+
+
+    harvest(raw_data, transform_classes, fname, profiling=options.profiling,
+        csv_writer=csv_writer)
 
 
 
