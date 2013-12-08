@@ -93,7 +93,7 @@ __version__ = '0.14'
 # - option to decode stream before searching: unicode, hex, base64, etc
 # - option for short display: one line per pattern found, with index, pattern
 #   name and matched value => make it default?
-# - options for CSV and XML outputs
+# - options for XML outputs
 # - export to OpenIOC?
 # ? zip file: open all files instead of only the 1st one, or add an option to
 #   specify the filename(s) to open within the zip, with wildcards?
