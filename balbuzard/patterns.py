@@ -1,5 +1,5 @@
 """
-balbuzard patterns - v0.02 2013-12-04 Philippe Lagadec
+balbuzard patterns - v0.03 2013-12-09 Philippe Lagadec
 
 This file contains pattern definitions for the Balbuzard tools.
 
@@ -37,45 +37,139 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-__version__ = '0.02'
+__version__ = '0.03'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
 # 2013-12-03 v0.01 PL: - 1st version, moved patterns from balbuzard
 # 2013-12-04 v0.02 PL: - declare each pattern as a variable, used to create
 #                        lists of patterns
+# 2013-12-09 v0.03 PL: - added filter function for IPv4 addresses
+#                      - moved bbharvest patterns here
 
 #------------------------------------------------------------------------------
 # TODO:
-# + move patterns for bbcrack and bbharvest here
+# + move patterns for bbcrack here
 # + improve regex list with http://regexlib.com
 # - extract list of common strings found in EXE files
 # + add headers from other filetypes (Office, JPEG, archives, RTF, ZIP, ...)
 # + add regex for IPv6 address
 # - OLE header: add beta signature
-# - IP address: black list of uninteresting IPs (false positives), such as
-#   0.0.0.0, 1.1.1.1, etc
 # - patterns to find known crypto algorithm constants: convert FindCrypt to
 #   python strings - http://www.hexblog.com/?p=28
 # - check also signsrch and clamsrch, especially this script to parse signsrch
 #   signature file: http://code.google.com/p/clamsrch/source/browse/clamifier.py
+# + filter out e-mail addresses if too short
+# + add more patterns with typical strings found in executables
+# - for some patterns such as e-mail, would be good to have a validation function
+#   on top of regex to filter out false positives. for example using tldextract
+#   or list of TLDs: http://data.iana.org/TLD/tlds-alpha-by-domain.txt.
+
+
+#=== FILTERS ==================================================================
+
+def ipv4_filter (value, index=0, pattern=None):
+    """
+    IPv4 address filter:
+    - check if string length is >7 (e.g. not just 4 digits and 3 dots)
+    - check if not in list of bogon IP addresses
+    return True if OK, False otherwise.
+    """
+    ip = value
+    # check if string length is >7 (e.g. not just 4 digits and 3 dots)
+    if len(ip) < 8:
+        return False
+
+    # BOGON IP ADDRESS RANGES:
+    # source: http://www.team-cymru.org/Services/Bogons/bogon-dd.html
+
+    # extract 1st and 2nd decimal number from IP as int:
+    ip_bytes = ip.split('.')
+    byte1 = int(ip_bytes[0])
+    byte2 = int(ip_bytes[1])
+    #print 'ip=%s byte1=%d byte2=%d' % (ip, byte1, byte2)
+
+    # 0.0.0.0 255.0.0.0
+    if ip.startswith('0.'): return False
+
+    # actually we might want to see the following bogon IPs if malware uses them
+    # => this should be an option
+    # 10.0.0.0 255.0.0.0
+    if ip.startswith('10.'): return False
+    # 100.64.0.0 255.192.0.0
+    if ip.startswith('100.') and (byte2&192 == 64): return False
+    # 127.0.0.0 255.0.0.0
+    if ip.startswith('127.'): return False
+    # 169.254.0.0 255.255.0.0
+    if ip.startswith('169.254.'): return False
+    # 172.16.0.0 255.240.0.0
+    if ip.startswith('172.') and (byte2&240 == 16): return False
+    # 192.0.0.0 255.255.255.0
+    if ip.startswith('192.0.0.'): return False
+    # 192.0.2.0 255.255.255.0
+    if ip.startswith('192.0.2.'): return False
+    # 192.168.0.0 255.255.0.0
+    if ip.startswith('192.168.'): return False
+    # 198.18.0.0 255.254.0.0
+    if ip.startswith('198.') and (byte2&254 == 18): return False
+    # 198.51.100.0 255.255.255.0
+    if ip.startswith('198.51.100.'): return False
+    # 203.0.113.0 255.255.255.0
+    if ip.startswith('203.0.113.'): return False
+    # 224.0.0.0 240.0.0.0
+    if byte1&240 == 224: return False
+    # 240.0.0.0 240.0.0.0
+    if byte1&240 == 240: return False
+
+    # also reject IPs ending with .0 or .255
+    if ip.endswith('.0') or ip.endswith('.255'): return False
+    # otherwise it's a valid IP adress
+    return True
+
+def email_filter (value, index=0, pattern=None):
+    # check length, e.g. longer than xy@hp.fr
+    # check case? e.g. either lower, upper, or capital (but CamelCase covers
+    # almost everything... the only rejected case would be starting with lower
+    # and containing upper?)
+    # or reject mixed case in last part of domain name? (might filter 50% of
+    # false positives)
+    # optionally, DNS MX query with caching?
+
+    user, domain = value.split('@', 1)
+    if len(user)<2: return False
+    if len(domain)<5: return False
+
+    return True
 
 
 #=== PATTERNS =================================================================
 
-# NOTE: '(?i)' makes a regex case-insensitive
+# NOTES:
+# '(?i)' makes a regex case-insensitive
+# \b matches a word boundary, it can help speeding up regex search and avoiding
+# some false positives. See http://www.regular-expressions.info/wordboundaries.html
+
 ##    Pattern_re("IP addresses", r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", weight=10),
-pat_ipv4 = Pattern_re("IPv4 address", r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", weight=100)
+# Here I use \b to make sure there is no other digit around and to speedup search
+pat_ipv4 = Pattern_re("IPv4 address",
+    r"\b(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b",
+    weight=100, filt=ipv4_filter)
+
 pat_url = Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*[^\.\,\)\(\s]', weight=10)
+
 ##    Pattern_re('e-mail address', r'([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=2119
-pat_email = Pattern_re('e-mail address', r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b', weight=10) # adapted from http://www.regular-expressions.info/email.html
+pat_email = Pattern_re('e-mail address',
+    r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b',
+    weight=10, filt=email_filter)
+    # adapted from http://www.regular-expressions.info/email.html
+
 pat_domain = Pattern_re('domain name', r'(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)', weight=10) # source: http://regexlib.com/REDetails.aspx?regexp_id=1319
 
 pat_mz = Pattern("EXE MZ headers", "MZ|ZM".split('|'))
 pat_pe = Pattern("EXE PE headers", "PE")
 pat_mzpe = Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", weight=100) # (?s) sets the DOTALL flag, so that dot matches any character
 pat_exemsg = Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=10000)
-pat_exe_fname = Pattern_re("Executable filename", r"\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)", nocase=True, weight=10)
+pat_exe_fname = Pattern_re("Executable filename", r"\b\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)\b", nocase=True, weight=10)
 pat_upx = Pattern("EXE: UPX header", "UPX")
 pat_section = Pattern("EXE: section name", ".text|.data|.rdata|.rsrc".split('|'), nocase=True, weight=10) #nocase?
 pat_petite = Pattern("EXE: packed with Petite", ".petite", nocase=True, weight=10) #nocase?
@@ -101,6 +195,7 @@ pat_pdf_eof = Pattern('Possible PDF end of file marker', '%EOF', weight=10)
 
 pat_hex = Pattern_re('Hex blob', r'([A-F0-9][A-F0-9]|[a-f0-9][a-f0-9]){16,}', weight=1)
 pat_b64 = Pattern_re('Base64 blob', r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', weight=1)
+
 
 #------------------------------------------------------------------------------
 # Patterns for balbuzard:
@@ -134,3 +229,33 @@ patterns = [
     pat_hex,
     pat_b64,
     ]
+
+# patterns for bbharvest:
+harvest_patterns = [
+    pat_ipv4,
+    pat_url,
+    pat_email,
+    pat_domain,
+    # for harvest we don't catch MZ or PE alone, too many false positives
+    pat_mzpe,
+    pat_exemsg,
+    pat_exe_fname,
+    pat_upx,
+    pat_section,
+    pat_petite,
+    pat_win32,
+    pat_winsock,
+    pat_msvcpp,
+    pat_regkeys,
+    pat_filenames,
+    pat_keywords,
+    pat_ole2,
+    pat_vba,
+    pat_flash,
+    pat_flashobj1,
+    pat_flashobj2,
+    pat_pdf_hdr,
+    pat_pdf_eof,
+    # no detection of hex or Base64 blobs, too many false positives or too slow
+]
+
