@@ -126,6 +126,61 @@ def ipv4_filter (value, index=0, pattern=None):
     # otherwise it's a valid IP adress
     return True
 
+# TLDs registered at IANA:
+# from http://data.iana.org/TLD/tlds-alpha-by-domain.txt retrieved on 2013-12-09
+# (max len = 22 chars)
+tlds = set((
+     'ac',  'ad',  'ae',  'aero',  'af',  'ag',  'ai',  'al',
+     'am',  'an',  'ao',  'aq',  'ar',  'arpa',  'as',  'asia',
+     'at',  'au',  'aw',  'ax',  'az',  'ba',  'bb',  'bd',
+     'be',  'bf',  'bg',  'bh',  'bi',  'bike',  'biz',  'bj',
+     'bm',  'bn',  'bo',  'br',  'bs',  'bt',  'bv',  'bw',
+     'by',  'bz',  'ca',  'camera',  'cat',  'cc',  'cd',  'cf',
+     'cg',  'ch',  'ci',  'ck',  'cl',  'clothing',  'cm',  'cn',
+     'co',  'com',  'construction',  'contractors',  'coop',  'cr',  'cu',  'cv',
+     'cw',  'cx',  'cy',  'cz',  'de',  'diamonds',  'directory',  'dj',
+     'dk',  'dm',  'do',  'dz',  'ec',  'edu',  'ee',  'eg',
+     'enterprises',  'equipment',  'er',  'es',  'estate',  'et',  'eu',  'fi',
+     'fj',  'fk',  'fm',  'fo',  'fr',  'ga',  'gallery',  'gb',
+     'gd',  'ge',  'gf',  'gg',  'gh',  'gi',  'gl',  'gm',
+     'gn',  'gov',  'gp',  'gq',  'gr',  'graphics',  'gs',  'gt',
+     'gu',  'guru',  'gw',  'gy',  'hk',  'hm',  'hn',  'holdings',
+     'hr',  'ht',  'hu',  'id',  'ie',  'il',  'im',  'in',
+     'info',  'int',  'io',  'iq',  'ir',  'is',  'it',  'je',
+     'jm',  'jo',  'jobs',  'jp',  'ke',  'kg',  'kh',  'ki',
+     'kitchen',  'km',  'kn',  'kp',  'kr',  'kw',  'ky',  'kz',
+     'la',  'land',  'lb',  'lc',  'li',  'lighting',  'lk',  'lr',
+     'ls',  'lt',  'lu',  'lv',  'ly',  'ma',  'mc',  'md',
+     'me',  'menu',  'mg',  'mh',  'mil',  'mk',  'ml',  'mm',
+     'mn',  'mo',  'mobi',  'mp',  'mq',  'mr',  'ms',  'mt',
+     'mu',  'museum',  'mv',  'mw',  'mx',  'my',  'mz',  'na',
+     'name',  'nc',  'ne',  'net',  'nf',  'ng',  'ni',  'nl',
+     'no',  'np',  'nr',  'nu',  'nz',  'om',  'org',  'pa',
+     'pe',  'pf',  'pg',  'ph',  'photography',  'pk',  'pl',  'plumbing',
+     'pm',  'pn',  'post',  'pr',  'pro',  'ps',  'pt',  'pw',
+     'py',  'qa',  're',  'ro',  'rs',  'ru',  'rw',  'sa',
+     'sb',  'sc',  'sd',  'se',  'sexy',  'sg',  'sh',  'si',
+     'singles',  'sj',  'sk',  'sl',  'sm',  'sn',  'so',  'sr',
+     'st',  'su',  'sv',  'sx',  'sy',  'sz',  'tattoo',  'tc',
+     'td',  'technology',  'tel',  'tf',  'tg',  'th',  'tips',  'tj',
+     'tk',  'tl',  'tm',  'tn',  'to',  'today',  'tp',  'tr',
+     'travel',  'tt',  'tv',  'tw',  'tz',  'ua',  'ug',  'uk',
+     'uno',  'us',  'uy',  'uz',  'va',  'vc',  've',  'ventures',
+     'vg',  'vi',  'vn',  'voyage',  'vu',  'wf',  'ws',  'xn--3e0b707e',
+     'xn--45brj9c',  'xn--80ao21a',  'xn--80asehdb',  'xn--80aswg',  'xn--90a3ac',
+     'xn--clchc0ea0b2g2a9gcd',  'xn--fiqs8s',  'xn--fiqz9s',
+     'xn--fpcrj9c3d',  'xn--fzc2c9e2c',  'xn--gecrj9c',  'xn--h2brj9c',
+     'xn--j1amh',  'xn--j6w193g',  'xn--kprw13d',  'xn--kpry57d',
+     'xn--l1acc',  'xn--lgbbat1ad8j',  'xn--mgb9awbf',  'xn--mgba3a4f16a',
+     'xn--mgbaam7a8h',  'xn--mgbayh7gpa',  'xn--mgbbh1a71e',  'xn--mgbc0a9azcg',
+     'xn--mgberp4a5d4ar',  'xn--mgbx4cd0ab',  'xn--ngbc5azd',  'xn--o3cw4h',
+     'xn--ogbpf8fl',  'xn--p1ai',  'xn--pgbs0dh',  'xn--q9jyb4c',
+     'xn--s9brj9c',  'xn--unup4y',  'xn--wgbh1c',  'xn--wgbl6a',
+     'xn--xkc2al3hye2a',  'xn--xkc2dl3a5ee0h',  'xn--yfro4i67o',  'xn--ygbi2ammx',
+     'xxx',  'ye',  'yt',  'za',  'zm',  'zw',
+))
+
+
 def email_filter (value, index=0, pattern=None):
     # check length, e.g. longer than xy@hp.fr
     # check case? e.g. either lower, upper, or capital (but CamelCase covers
@@ -138,6 +193,8 @@ def email_filter (value, index=0, pattern=None):
     user, domain = value.split('@', 1)
     if len(user)<2: return False
     if len(domain)<5: return False
+    tld = domain.rsplit('.', 1)[1].lower()
+    if tld not in tlds: return False
 
     return True
 
@@ -159,7 +216,10 @@ pat_url = Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\
 
 ##    Pattern_re('e-mail address', r'([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=2119
 pat_email = Pattern_re('e-mail address',
-    r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b',
+    ##r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b',
+    # changed to catch all current TLDs registered at IANA (in combination with filter function):
+    # TLD = either only chars from 2 to 12, or 'XN--' followed by up to 18 chars and digits
+    r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2,12}|XN--[A-Z0-9]{4,18})\b',
     weight=10, filt=email_filter)
     # adapted from http://www.regular-expressions.info/email.html
 

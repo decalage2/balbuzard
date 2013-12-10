@@ -232,7 +232,7 @@ class Pattern_re (Pattern):
             # create second pattern for trigger, for single search:
             self.trigger_pat = Pattern(name, pat=trigger, nocase=nocase, single=True)
         self.filter = filt
-        print 'pattern %s: filter=%s' % (self.name, self.filter)
+        #print 'pattern %s: filter=%s' % (self.name, self.filter)
 
 
     def find_all (self, data, data_lower=None):
@@ -254,7 +254,7 @@ class Pattern_re (Pattern):
                 valid = self.filter(value=m.group(), index=m.start(), pattern=self)
             if valid: found.append((m.start(), m.group()))
             # debug message:
-            else: print 'Filtered out %s: %s' % (self.name, repr(m.group()))
+            #else: print 'Filtered out %s: %s' % (self.name, repr(m.group()))
         return found
 
 
