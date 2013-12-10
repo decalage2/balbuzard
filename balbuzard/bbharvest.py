@@ -1,5 +1,5 @@
 """
-bbharvest - v0.02 2013-12-08 Philippe Lagadec
+bbharvest - v0.03 2013-12-09 Philippe Lagadec
 
 bbharvest is a tool to analyse malware that uses obfuscation such as XOR, ROL,
 ADD (and many combinations) to hide information such as IP addresses, domain
@@ -38,45 +38,23 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.02'
+__version__ = '0.03'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
 # 2013-12-06 v0.01 PL: - 1st version, moved code from bbcrack
 # 2013-12-08 v0.02 PL: - added CSV output, renamed multi_trans to harvest
+# 2013-12-09 v0.03 PL: - merged patterns list with balbuzard in patterns.py
 
 
 #------------------------------------------------------------------------------
 # TODO:
-# + merge patterns list with balbuzard in patterns.py
-# + filter out IPv4 bogon addresses: http://www.team-cymru.org/Services/Bogons/bogon-dd.html
-#   + len>7
-# + filter out e-mail addresses if too short
-# + add more patterns with typical strings found in executables
 # + avoid duplicate code in main, using functions in bbcrack
 # + plugin dir to load user transforms and patterns (using exec or import?)
-# + harvest mode: option to save copy of every matching file
+# + option to save copy of every matching file
 # + csv output for profiling mode
 # + main: same fix as balbuzard for fname in zip
-# - for some patterns such as e-mail, would be good to have a validation function
-#   on top of regex to filter out false positives. for example using tldextract
-#   or list of TLDs: http://data.iana.org/TLD/tlds-alpha-by-domain.txt.
 
-# BOGON IP ADDRESS RANGES:
-##0.0.0.0 255.0.0.0
-##10.0.0.0 255.0.0.0
-##100.64.0.0 255.192.0.0
-##127.0.0.0 255.0.0.0
-##169.254.0.0 255.255.0.0
-##172.16.0.0 255.240.0.0
-##192.0.0.0 255.255.255.0
-##192.0.2.0 255.255.255.0
-##192.168.0.0 255.255.0.0
-##198.18.0.0 255.254.0.0
-##198.51.100.0 255.255.255.0
-##203.0.113.0 255.255.255.0
-##224.0.0.0 240.0.0.0
-##240.0.0.0 240.0.0.0
 
 #--- IMPORTS ------------------------------------------------------------------
 
@@ -87,39 +65,7 @@ from bbcrack import *
 
 #--- PATTERNS -----------------------------------------------------------------
 
-harvest_patterns = [
-    Pattern_re("IP address", r"\b(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b", weight=100),
-    Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*[^\.\,\)\(\s]', weight=10),
-##    Pattern('e-mail address', regex=r'([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=2119
-    Pattern_re('e-mail address', r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b', weight=10), # adapted from http://www.regular-expressions.info/email.html
-    Pattern_re('domain name', r'(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=1319
-    Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", weight=100), # (?s) sets the DOTALL flag, so that dot matches any character
-    Pattern_re("Executable filename", r"\b\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)\b", nocase=True, weight=10),
-    Pattern("EXE: UPX header", "UPX"),
-    Pattern("EXE: section name", ".text|.data|.rdata|.rsrc".split('|'), nocase=True, weight=10), #nocase?
-    Pattern("EXE: packed with Petite", ".petite", nocase=True, weight=10), #nocase?
-    Pattern("EXE: interesting Win32 function names", "WriteFile|IsDebuggerPresent|RegSetValue|CreateRemoteThread".split('|'), weight=10000),  #nocase?
-    Pattern("EXE: interesting WinSock function names", "WS2_32.dll|WSASocket|WSASend|WSARecv".split('|'), nocase=True, weight=10000), #nocase?
-    Pattern("EXE: possibly compiled with Microsoft Visual C++", "Microsoft Visual C++", weight=10000),
-
-    Pattern("Interesting registry keys", "CurrentVersion\\Run|UserInit".split('|'), weight=10000), #nocase?
-    Pattern("Interesting file names", "\\drivers\\etc\\hosts|cmd\.exe|\\Start Menu\\Programs\\Startup".split('|'), nocase=True, weight=10000),
-    Pattern("Interesting keywords", "password|login|pwd|administrator|admin|root|smtp|pop|ftp|ssh|icq|backdoor|vmware".split('|'), nocase=True, weight=100), # removed http
-    #Pattern_re("NOP instructions (possible shellcode)", r"\x90{4,}"), # this regex matches 4 NOPs or more
-
-    Pattern("Possible OLE2 header (D0CF)", "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", weight=10),
-    Pattern("Possible VBA macros", "VBA"), #nocase?
-
-    Pattern('Possible Flash header', 'SWF|FWS'.split('|')),
-    Pattern('Flash OLE object 1', 'ShockwaveFlash.ShockwaveFlash', weight=10),
-    Pattern('Flash OLE object 2', 'S\x00h\x00o\x00c\x00k\x00w\x00a\x00v\x00e\x00F\x00l\x00a\x00s\x00h', weight=10), # warning: this is unicode
-
-    Pattern('Possible PDF header', '%PDF-', weight=10),
-    Pattern('Possible PDF end of file marker', '%EOF', weight=10),
-
-##    Pattern_re('Hex blob', r'([A-F0-9][A-F0-9]|[a-f0-9][a-f0-9]){16,}', weight=1),
-##    Pattern_re('Base64 blob', r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', weight=1),
-]
+from balbuzard import harvest_patterns
 
 
 #--- FUNCTIONS ----------------------------------------------------------------

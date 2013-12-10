@@ -1,5 +1,5 @@
 """
-balbuzard - v0.14 2013-12-04 Philippe Lagadec
+balbuzard - v0.15 2013-12-09 Philippe Lagadec
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
@@ -34,7 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-__version__ = '0.14'
+__version__ = '0.15'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -68,6 +68,8 @@ __version__ = '0.14'
 #                      - added CSV output
 # 2013-12-04 v0.14 PL: - can now scan several files from command line args
 #                      - now short display is default, -v for hex view
+# 2013-12-09 v0.15 PL: - Pattern_re: added filter function to ignore false
+#                        positives
 
 
 #------------------------------------------------------------------------------
@@ -83,16 +85,12 @@ __version__ = '0.14'
 # - option to support Unicode strings? (need to check 2 alignments and 2 byte
 #   orders, or simply insert \x00 between all chars, e.g. 'T\x00E\x00S\x00T')
 # + improve patterns to avoid some false positives: maybe use pefile or magic.py ?
-# - pattern: validation function to be called to verify matches (may be a regex
-#   or any python function returning a bool)
 # - HTML report with color highlighting
 # - GUI ?
 # - optional use of other magic libs (TrIDscan, pymagic, python-magic, etc: see PyPI)
 # - provide samples
 # - RTF hex object decoder?
 # - option to decode stream before searching: unicode, hex, base64, etc
-# - option for short display: one line per pattern found, with index, pattern
-#   name and matched value => make it default?
 # - options for XML outputs
 # - export to OpenIOC?
 # ? zip file: open all files instead of only the 1st one, or add an option to
@@ -215,10 +213,13 @@ class Pattern_re (Pattern):
         - nocase: bool, if True, search is case-insensitive
         - single: bool, if True search will stop at the first occurence
         - weight: int, weight used by balbucrack
+        - filt: function to filter out false positives, should be a function
+          with arguments (value, index, pattern), returning True when acceptable
+          or False when it is a false positive.
     """
 
     def __init__(self, name, pat=None, trigger=None, nocase=False, single=False,
-        weight=1):
+        weight=1, filt=None):
         # first call the Pattern constructor:
         Pattern.__init__(self, name, pat, nocase, single, weight)
         # compile regex
@@ -230,6 +231,8 @@ class Pattern_re (Pattern):
         if trigger is not None:
             # create second pattern for trigger, for single search:
             self.trigger_pat = Pattern(name, pat=trigger, nocase=nocase, single=True)
+        self.filter = filt
+        print 'pattern %s: filter=%s' % (self.name, self.filter)
 
 
     def find_all (self, data, data_lower=None):
@@ -246,7 +249,12 @@ class Pattern_re (Pattern):
             if self.trigger_pat.count(data, data_lower) == 0:
                 return found
         for m in self.pat.finditer(data):
-            found.append((m.start(), m.group()))
+            valid = True
+            if self.filter is not None:
+                valid = self.filter(value=m.group(), index=m.start(), pattern=self)
+            if valid: found.append((m.start(), m.group()))
+            # debug message:
+            else: print 'Filtered out %s: %s' % (self.name, repr(m.group()))
         return found
 
 
@@ -262,7 +270,15 @@ class Pattern_re (Pattern):
             # found:
             if self.trigger_pat.count(data, data_lower) == 0:
                 return 0
-        return len(self.pat.findall(data))
+        # when no filter is defined, quickest way to count:
+        if self.filter is None:
+            return len(self.pat.findall(data))
+        # otherwise, need to call filter for each match:
+        c = 0
+        for m in self.pat.finditer(data):
+            valid = self.filter(value=m.group(), index=m.start(), pattern=self)
+            if valid: c += 1
+        return c
 
 
 #------------------------------------------------------------------------------
