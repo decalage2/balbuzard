@@ -1,5 +1,5 @@
 """
-balbuzard patterns - v0.03 2013-12-09 Philippe Lagadec
+balbuzard patterns - v0.04 2014-01-04 Philippe Lagadec
 
 This file contains pattern definitions for the Balbuzard tools.
 
@@ -13,7 +13,7 @@ malware obfuscation such as XOR, ROL, ADD and various combinations.
 For more info and updates: http://www.decalage.info/balbuzard
 
 
-balbuzard is copyright (c) 2007-2013, Philippe Lagadec (http://www.decalage.info)
+balbuzard is copyright (c) 2007-2014, Philippe Lagadec (http://www.decalage.info)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -37,7 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-__version__ = '0.03'
+__version__ = '0.04'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -46,6 +46,7 @@ __version__ = '0.03'
 #                        lists of patterns
 # 2013-12-09 v0.03 PL: - added filter function for IPv4 addresses
 #                      - moved bbharvest patterns here
+# 2014-01-04 v0.04 PL: - added Java filenames to pat_exe_fnames
 
 #------------------------------------------------------------------------------
 # TODO:
@@ -229,7 +230,7 @@ pat_mz = Pattern("EXE MZ headers", "MZ|ZM".split('|'))
 pat_pe = Pattern("EXE PE headers", "PE")
 pat_mzpe = Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", weight=100) # (?s) sets the DOTALL flag, so that dot matches any character
 pat_exemsg = Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=10000)
-pat_exe_fname = Pattern_re("Executable filename", r"\b\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)\b", nocase=True, weight=10)
+pat_exe_fname = Pattern_re("Executable filename", r"\b\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR|CLASS|JAR)\b", nocase=True, weight=10)
 pat_upx = Pattern("EXE: UPX header", "UPX")
 pat_section = Pattern("EXE: section name", ".text|.data|.rdata|.rsrc".split('|'), nocase=True, weight=10) #nocase?
 pat_petite = Pattern("EXE: packed with Petite", ".petite", nocase=True, weight=10) #nocase?
