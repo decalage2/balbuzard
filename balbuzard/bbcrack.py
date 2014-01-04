@@ -845,6 +845,28 @@ def select_transforms (level=2, incremental_level=None, transform_names=None):
     return transform_classes
 
 
+def read_file(filename, zip_password=None):
+    """
+    Open a file, read and return its data as a string.
+    If zip_password is provided, the file will be opened as a zip file, and the
+    password will be used to decrypt and read the 1st file in the zip archive.
+    """
+    if zip_password is not None:
+        # extract 1st file from zip archive, using password
+        print 'Opening zip archive %s with password "%s"' % (filename, zip_password)
+        z = zipfile.ZipFile(filename, 'r')
+        print 'Opening first file:', z.infolist()[0].filename
+        raw_data = z.read(z.infolist()[0], zip_password)
+    else:
+        # normal file
+        print 'Opening file', filename
+        f = file(filename, 'rb')
+        raw_data = f.read()
+        f.close()
+    return raw_data
+
+
+
 
 #=== MAIN =====================================================================
 
@@ -880,19 +902,7 @@ if __name__ == '__main__':
         sys.exit()
 
     fname = args[0]
-    if options.zip_password is not None:
-        # extract 1st file from zip archive, using password
-        pwd = options.zip_password
-        print 'Opening zip archive %s with password "%s"' % (fname, pwd)
-        z = zipfile.ZipFile(fname, 'r')
-        print 'Opening first file:', z.infolist()[0].filename
-        raw_data = z.read(z.infolist()[0], pwd)
-    else:
-        # normal file
-        print 'Opening file', fname
-        f = file(fname, 'rb')
-        raw_data = f.read()
-        f.close()
+    raw_data = read_file(fname, options.zip_password)
 
     transform_classes = select_transforms(level=options.level,
         incremental_level=options.inclevel, transform_names=options.transform)

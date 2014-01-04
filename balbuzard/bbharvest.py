@@ -179,22 +179,8 @@ if __name__ == '__main__':
         sys.exit()
 
 
-    #TODO replace the following code by functions in bbcrack, to avoid duplication:
-
     fname = args[0]
-    if options.zip_password is not None:
-        # extract 1st file from zip archive, using password
-        pwd = options.zip_password
-        print 'Opening zip archive %s with password "%s"' % (fname, pwd)
-        z = zipfile.ZipFile(fname, 'r')
-        print 'Opening first file:', z.infolist()[0].filename
-        raw_data = z.read(z.infolist()[0], pwd)
-    else:
-        # normal file
-        print 'Opening file', fname
-        f = file(fname, 'rb')
-        raw_data = f.read()
-        f.close()
+    raw_data = read_file(fname, options.zip_password)
 
     transform_classes = select_transforms(level=options.level,
         incremental_level=options.inclevel, transform_names=options.transform)
