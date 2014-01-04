@@ -55,6 +55,7 @@ __version__ = '0.08'
 # 2013-12-06 v0.07 PL: - moved multiple trans code to bbharvest
 # 2014-01-04 v0.08 PL: - improved transform names
 #                      - moved code from main to functions
+#                      - added -i option for incremental level
 
 
 #------------------------------------------------------------------------------
@@ -249,7 +250,7 @@ class Transform_XOR (Transform_char):
         assert params>0 and params<256
         self.params = params
         self.name = "XOR %02X" % params
-        self.shortname = "xor_%02X" % params
+        self.shortname = "xor%02X" % params
 
     def transform_char (self, char):
         # here params is an integer
@@ -852,7 +853,9 @@ if __name__ == '__main__':
     usage = 'usage: %prog [options] <filename>'
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-l', '--level', dest='level', type='int', default=2,
-        help='select transforms level 1, 2 or 3')
+        help='select transforms with level 1, 2 or 3 and below')
+    parser.add_option('-i', '--inclevel', dest='inclevel', type='int', default=None,
+        help='select transforms only with level 1, 2 or 3 (incremental)')
     parser.add_option('-k', '--keep', dest='keep', type='int', default=20,
         help='number of transforms to keep after stage 1')
     parser.add_option('-s', '--save', dest='save', type='int', default=10,
@@ -892,7 +895,7 @@ if __name__ == '__main__':
         f.close()
 
     transform_classes = select_transforms(level=options.level,
-        incremental_level=None, transform_names=options.transform)
+        incremental_level=options.inclevel, transform_names=options.transform)
 
     # STAGE 1: quickly count some significant characters to select best transforms
     print 'STAGE 1: quickly counting simple patterns for all transforms'

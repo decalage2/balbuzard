@@ -48,6 +48,7 @@ __version__ = '0.04'
 # 2013-12-08 v0.02 PL: - added CSV output, renamed multi_trans to harvest
 # 2013-12-09 v0.03 PL: - merged patterns list with balbuzard in patterns.py
 # 2014-01-04 v0.04 PL: - use functions from bbcrack to simplify main
+#                      - added -i option for incremental level
 
 
 #------------------------------------------------------------------------------
@@ -152,6 +153,8 @@ if __name__ == '__main__':
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-l', '--level', dest='level', type='int', default=1,
         help='select transforms level 1, 2 or 3')
+    parser.add_option('-i', '--inclevel', dest='inclevel', type='int', default=None,
+        help='select transforms only with level 1, 2 or 3 (incremental)')
 ##    parser.add_option('-s', '--save', dest='save', type='int', default=10,
 ##        help='number of transforms to save to files after stage 2')
     parser.add_option('-c', '--csv', dest='csv',
@@ -194,7 +197,7 @@ if __name__ == '__main__':
         f.close()
 
     transform_classes = select_transforms(level=options.level,
-        incremental_level=None, transform_names=options.transform)
+        incremental_level=options.inclevel, transform_names=options.transform)
 
     # open CSV file
     if options.csv:
