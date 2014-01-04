@@ -12,7 +12,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 
 # LICENSE:
 #
-# balbucrack is copyright (c) 2013, Philippe Lagadec (http://www.decalage.info)
+# bbcrack is copyright (c) 2013-2014, Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -57,7 +57,8 @@ __version__ = '0.07'
 
 #------------------------------------------------------------------------------
 #TODO
-# + split harvest code to bbharvest
+# + -e option to encrypt output files with zip password
+# + -f option to select file(s) within zip instead of the 1st one
 # + declare patterns only once in a separate module, use variables to create
 #   groups for stage 1/2
 # + profiling to see which patterns take more time => find which regex hangs

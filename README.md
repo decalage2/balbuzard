@@ -3,9 +3,18 @@ Balbuzard
 
 [Balbuzard](http://www.decalage.info/python/balbuzard) is a package of open-source python tools for malware analysis: 
 
-- **balbuzard** is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs and common file headers. It is easily extensible with patterns, regular expressions and Yara rules.
-- **bbcrack** uses a new algorithm based on patterns of interest to bruteforce typical malware obfuscation such as XOR, ROL, ADD and various combinations. 
+- **balbuzard** is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs and embedded files. It is easily extensible with patterns, regular expressions and Yara rules.
+- **bbcrack** uses a new algorithm based on patterns of interest to bruteforce typical malware obfuscation such as XOR, ROL, ADD and various combinations, in order to guess which algorithms/keys have been used. 
+- **bbharvest** extracts all patterns of interest found when applying transforms such as XOR, ROL, ADD and various combinations, trying all possible keys. It is especially useful when several keys or several transforms are used in a single file.
 - **bbtrans** can apply any of the transforms from bbcrack (XOR, ROL, ADD and various combinations) to a file.
+
+When to use these tools:
+
+- If you need to analyze a new malicious file, you can first try balbuzard to extract patterns of interest and detect embedded files in cleartext.
+- Then if you think the malicious file might use an obfuscation algorithm such as XOR to hide interesting data, try bbcrack to find the algorithm and the key(s).
+- Alternatively, if bbcrack is not successful, or if you think the file may use several algorithms and/or keys, try bbharvest.
+
+Important note: while balbuzard and bbharvest are straightforward and readily usable, bbcrack is still an experimental tool and it has not been tested on many samples yet. Please [contact me](http://www.decalage.info/contact) if you test these tools on malware samples to tell me if it works or not.
 
 See <http://www.decalage.info/python/balbuzard> for more info.
 
@@ -16,7 +25,8 @@ News
 
 Follow all updates and news on Twitter: <https://twitter.com/decalage2>
 
-- 2013-12-04 v0.14: Initial release of Balbuzard and bbcrack
+- 2014-01-0x v0.xx: Initial release of Balbuzard tools
+- 2013-03-15: added harvest mode (bbharvest)
 - 2011-05-06: added bruteforce functions (bbcrack)
 - 2008-06-06: first public release as rescan for SSTIC08
 - 2007-07-11: first versions of rescan
@@ -42,7 +52,7 @@ But as soon as a file is larger than a few kilobytes, this can become very tedio
 ### Features
 
 - search for string or regular expression patterns
-- default set of patterns for malware analysis
+- default set of patterns for malware analysis: IP addresses, e-mail addresses, URLs, typical EXE strings, common file headers, various malware strings
 - includes Yara signatures from the [Malware Analyst's Cookbook](https://code.google.com/p/malwarecookbook) (capabilities, packer and magic)
 - easily extensible with new patterns in python scripts and Yara rules
 - optional use of the Yara engine and Yara rules as patterns
@@ -140,7 +150,7 @@ So in the end I would say that both tools are complementary.
 
 Of course, it is possible to implement Balbuzard's set of patterns using Yara rules, and I plan to use the Yara engine as an option in the near future. It is already possible to use Yara rules to extend Balbuzard patterns. 
 
-Back in 2007-2008 when I started developing this tool Yara was not yet published. And since then, I kept it like this because I prefer to have a lightweight pure python script in most cases.
+Back in 2007-2008 when I started developing this tool as rescan, Yara was not yet published. And since then, I kept it like this because I preferred to have a lightweight pure python script to develop other tools without requiring the installation of Yara.
 
 ### Other similar tools
 
@@ -152,17 +162,16 @@ Besides Yara, the following tools may also be used to search specific patterns w
 bbcrack:
 --------
 
-bbcrack (Balbucrack) is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
+bbcrack (Balbucrack) is a tool to crack typical malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
 specific patterns (IP addresses, domain names, URLs, known file headers and
 strings, etc) using the Balbuzard engine.
-The main difference with similar tools is that it supports a large number of transforms and it uses a  specific algorithm based on patterns of interest. 
+The main difference with similar tools is that it supports a large number of transforms and it uses a specific algorithm based on patterns of interest. 
 
 ### Features
 
 - provided with a large number of obfuscation transforms such as XOR, ROL, ADD (including combined transforms)
 - supports fast character-based transforms, or any file transform
-- "harvest mode" for malware with multiple obfuscations/keys
 - string or regular expression patterns
 - options to select which transforms to check
 - can open malware in password-protected zip files without writing to disk
@@ -202,14 +211,12 @@ For performance reasons, bbcrack uses a two-stages algorithm:
 	  -t TRANSFORM, --transform=TRANSFORM
 	                        only check specific transforms (comma separated list,
 	                        or "-t list" to display all available transforms)
-	  -m                    harvest mode: will apply all transforms and extract
-	                        patterns of interest. Slow, but useful when a file
-	                        uses multiple transforms.
 	  -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
 	                        if the file is a zip archive, open first file from it,
 	                        using the provided password (requires Python 2.6+)
 	  -p                    profiling: measure time spent on each pattern.
-	
+
+
 
 ### A real-life example:
 
@@ -232,19 +239,76 @@ payload.bin.
 - open the file payload\_xor00\_inc\_rol5.bin in a hex viewer: it should be a malicious executable
 file in cleartext.
 
-### Harvest mode
+
+### Tips:
+
+- if you only have a couple minutes, run a quick bbcrack at level 1.
+- if you have 5-10 minutes, run bbcrack at level 2, go for a coffee.
+- if nothing found, run bbcrack at level 3 while you go for lunch or during the night.
+- if you found nothing, run bbharvest at level 1 or 2, just to check if there are multiple transforms.
+- if you found an executable file, run bbharvest on the decoded file. Some executables have strings hidden by multiple transforms, so they would be missed by bbcrack in normal mode.
+
+
+### How to extend the list of patterns and transforms
+
+Coming soon: it will be possible to add new transforms and new patterns using plugin scripts in python, similarly to Balbuzard.
+
+### What are the differences with XORSearch, XORStrings, xortool and others?
+
+For a good introduction to a number of malware deobfuscation tools, see [Lenny Zeltser's article](http://computer-forensics.sans.org/blog/2013/05/14/tools-for-examining-xor-obfuscation-for-malware-analysis) or [this presentation](http://bit.ly/15bI47C) from Michael Barr.
+
+- [XORSearch](http://blog.didierstevens.com/programs/xorsearch/): C program, looks for one or several strings, ASCII, hex or unicode, supports XOR, ROL, ROT or SHIFT with single one-byte key (no combinations). 
+- [XORStrings](http://blog.didierstevens.com/?s=xorstrings): C program, counts how many strings appear for each transform, supports XOR, ROL or SHIFT with single one-byte key (no combinations).
+- [xorBruteForcer](http://eternal-todo.com/var/scripts/xorbruteforcer): Python script, tries all 255 one-byte XOR keys, can search for one string.
+- [iheartxor/brutexor](http://hooked-on-mnemonics.blogspot.nl/p/iheartxor.html): Python script, tries all 255 one-byte XOR keys, can search for one regular expression, by default any string between null bytes.
+- [NoMoreXOR](https://github.com/hiddenillusion/NoMoreXOR): TODO
+- [unxor](https://github.com/tomchop/unxor/): TODO
+- xortool: TODO
+
+
+----------------------------------------------------------------------------------
+
+bbharvest:
+----------
+
+bbharvest extracts all patterns of interest found when applying transforms such as XOR, ROL, ADD and various combinations, trying all possible keys. It is especially useful when several keys or several transforms are used in a single file.
+
+### Features
+
+- uses the balbuzard engine and patterns, and bbcrack transforms
+- search for string or regular expression patterns
+- default set of patterns for malware analysis: IP addresses, e-mail addresses, URLs, typical EXE strings, common file headers, various malware strings
+- provided with a large number of obfuscation transforms such as XOR, ROL, ADD (including combined transforms)
+- supports fast character-based transforms, or any file transform
+- effective on malware with multiple obfuscations/keys
+- options to select which transforms to check
+- CSV output
+- can open malware in password-protected zip files without writing to disk
+- pure python 2.x, no dependency or compilation 
+
+Coming soon:
+
+- patterns and transforms easily extensible by python scripts
+- optional use of the Yara engine and Yara rules as patterns
+- CSV and HTML outputs
+- batch analysis of multiple files/folders
+
+
+### How does it work?
 
 While bbcrack is great for malware obfuscated with a single transform and a single key, it might not be effective on malware using several transforms and/or several keys to obfuscate different parts or strings in a single file. For example a malware may use a different XOR key for each string.
 
-The harvest mode is designed to address this case, by trying all transforms and all keys, extracting specific patterns of interest that can be found. This way, even if a URL or an IP address is obfuscated with a transform and key used only once, it should be reported in this mode.
+bbharvest is designed to address this case, by trying all transforms and all keys, extracting specific patterns of interest that can be found. This way, even if a URL or an IP address is obfuscated with a transform and key used only once, it should be reported by bbharvest.
 
-However, this mode may return a lot of false positives. It is therefore necessary to analyze the results manually in order to extract meaningful data. 
+However, bbharvest may return a lot of false positives. It is therefore necessary to analyze the results manually in order to extract meaningful data. 
 
-It is recommended to add option "-l 1" in order to limit the search to level 1 transforms 
+By default the search is limited to level 1 transforms, for time reasons. You may increase the scope using the option "-l 2" or "-l 3". 
+
+### Usage
 
 Here is an example, using a sample file containing random bytes and several patterns obfuscated with various transforms:
 
-	>bbcrack.py -m -l 1 sample_multiple_transforms.bin
+	>bbharvest.py sample_multiple_transforms.bin
 
 	Opening file sample_multiple_transforms.bin
 	*** WARNING: harvest mode may return a lot of false positives!
@@ -268,38 +332,22 @@ Here is an example, using a sample file containing random bytes and several patt
 
 In this example it appears that the file contains an embedded executable file obfuscated with XOR 0xBE, an IP address with XOR 88 ROL 5, and a URL with ROL 3 ADD D6.
 
-In future version the harvest mode will be moved to a separate tool in order to simplify command-line options. Additional filters will also be added to reduce the number of false positives. 
-
-### Tips:
-
-- if you only have a couple minutes, run a quick bbcrack at level 1.
-- if you have 5-10 minutes, run bbcrack at level 2, go for a coffee.
-- if nothing found, run bbcrack at level 3 while you go for lunch or during the night.
-- if you found nothing, run bbcrack in harvest mode (option -m) at level 1 or 2, just to check if there are multiple transforms.
-- if you found an executable file, run the harvest mode on the decoded file. Some executables have strings hidden by multiple transforms, so they would be missed by bbcrack in normal mode.
-
 
 ### How to extend the list of patterns and transforms
 
-Coming soon: it will be possible to add new transforms and new patterns using plugin scripts in python, similarly to Balbuzard.
+Coming soon: it will be possible to add new transforms and new patterns using plugin scripts in python, similarly to Balbuzard. If you are interested or if you have ideas of new transforms/patterns, please [contact me](http://www.decalage.info/contact).
 
-### What are the differences with XORSearch, XORStrings, xortool and others?
+### Are there other similar tools?
 
-For a good introduction to a number of malware deobfuscation tools, see [Lenny Zeltser's article](http://computer-forensics.sans.org/blog/2013/05/14/tools-for-examining-xor-obfuscation-for-malware-analysis) or [this presentation](http://bit.ly/15bI47C) from Michael Barr.
-
-- [XORSearch](http://blog.didierstevens.com/programs/xorsearch/): C program, looks for one or several strings, ASCII, hex or unicode, supports XOR, ROL, ROT or SHIFT with single one-byte key (no combinations). 
-- [XORStrings](http://blog.didierstevens.com/?s=xorstrings): C program, counts how many strings appear for each transform, supports XOR, ROL or SHIFT with single one-byte key (no combinations).
-- [xorBruteForcer](http://eternal-todo.com/var/scripts/xorbruteforcer): Python script, tries all 255 one-byte XOR keys, can search for one string.
-- [iheartxor/brutexor](http://hooked-on-mnemonics.blogspot.nl/p/iheartxor.html): Python script, tries all 255 one-byte XOR keys, can search for one regular expression, by default any string between null bytes.
-- [NoMoreXOR](https://github.com/hiddenillusion/NoMoreXOR): TODO
-- [unxor](https://github.com/tomchop/unxor/): TODO
-- xortool: TODO
-
+For now, I haven't come across tools similar to bbharvest. If you find one, please [contact me](http://www.decalage.info/contact).
 
 ----------------------------------------------------------------------------------
 
 bbtrans:
 --------
+
+bbtrans can apply any of the transforms from bbcrack (XOR, ROL, ADD and various combinations) to a file.
+
 
 TODO
 
