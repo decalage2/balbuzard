@@ -1,5 +1,5 @@
 """
-bbharvest - v0.03 2013-12-09 Philippe Lagadec
+bbharvest - v0.04 2014-01-04 Philippe Lagadec
 
 bbharvest is a tool to analyse malware that uses obfuscation such as XOR, ROL,
 ADD (and many combinations) to hide information such as IP addresses, domain
@@ -38,7 +38,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.03'
+__version__ = '0.04'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -47,6 +47,7 @@ __version__ = '0.03'
 # 2013-12-06 v0.01 PL: - moved harvest code from bbcrack to bbharvest
 # 2013-12-08 v0.02 PL: - added CSV output, renamed multi_trans to harvest
 # 2013-12-09 v0.03 PL: - merged patterns list with balbuzard in patterns.py
+# 2014-01-04 v0.04 PL: - use functions from bbcrack to simplify main
 
 
 #------------------------------------------------------------------------------
@@ -166,10 +167,7 @@ if __name__ == '__main__':
 
     # if option "-t list", display list of transforms and quit:
     if options.transform == 'list':
-        print 'Available transforms:'
-        for Transform in transform_classes3:
-            print '- %s: %s' % (Transform.gen_id, Transform.gen_name)
-        sys.exit()
+        list_transforms()
 
     # Print help if no argurments are passed
     if len(args) == 0:
@@ -195,24 +193,8 @@ if __name__ == '__main__':
         raw_data = f.read()
         f.close()
 
-    if   options.level == 1:
-        transform_classes = transform_classes1
-    elif options.level == 2:
-        transform_classes = transform_classes2
-    else:
-        transform_classes = transform_classes3
-
-    if options.transform:
-        # options.transform is either a transform name, or a comma-separated list
-        transform_classes = []
-        trans_names = options.transform.split(',')
-        for tname in trans_names:
-            for trans in transform_classes3:
-                if trans.gen_id == tname:
-                    transform_classes.append(trans)
-        # check if any transform was found:
-        if len(transform_classes) == 0:
-            sys.exit('Transform "%s" does not exist. Use "-t list" to see all available transforms.' % options.transform)
+    transform_classes = select_transforms(level=options.level,
+        incremental_level=None, transform_names=options.transform)
 
     # open CSV file
     if options.csv:
