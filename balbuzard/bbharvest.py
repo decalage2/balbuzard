@@ -14,7 +14,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 
 # LICENSE:
 #
-# balbucrack is copyright (c) 2013, Philippe Lagadec (http://www.decalage.info)
+# bbharvest is copyright (c) 2013-2014, Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -42,7 +42,9 @@ __version__ = '0.03'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
-# 2013-12-06 v0.01 PL: - 1st version, moved code from bbcrack
+# 2013-03-15       PL: - harvest mode in bbcrack: run all transforms, extract all
+#                        significant patterns
+# 2013-12-06 v0.01 PL: - moved harvest code from bbcrack to bbharvest
 # 2013-12-08 v0.02 PL: - added CSV output, renamed multi_trans to harvest
 # 2013-12-09 v0.03 PL: - merged patterns list with balbuzard in patterns.py
 
