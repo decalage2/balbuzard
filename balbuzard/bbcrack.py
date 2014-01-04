@@ -1,5 +1,5 @@
 """
-bbcrack - v0.07 2013-12-06 Philippe Lagadec
+bbcrack - v0.08 2014-01-04 Philippe Lagadec
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -36,7 +36,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.07'
+__version__ = '0.08'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -53,6 +53,8 @@ __version__ = '0.07'
 #                      - fixed bug in xor_add transform
 # 2013-04-02 v0.06 PL: - added Transform_XOR_DEC
 # 2013-12-06 v0.07 PL: - moved multiple trans code to bbharvest
+# 2014-01-04 v0.08 PL: - improved transform names
+#                      - moved code from main to functions
 
 
 #------------------------------------------------------------------------------
@@ -217,12 +219,12 @@ class Transform_identity (Transform_string):
     Transform that does not change data.
     """
     # generic name for the class:
-    gen_name = 'Identity'
-    gen_id   = 'ident'
+    gen_name = 'Identity Transformation, no change to data. Parameters: none.'
+    gen_id   = 'identity'
 
     def __init__(self, params=None):
-        self.name = "Identity Transformation"
-        self.shortname = "identity"
+        self.name = self.gen_name
+        self.shortname = self.gen_id
         self.params = None
 
     def transform_string (self, data):
@@ -239,7 +241,7 @@ class Transform_XOR (Transform_char):
     XOR Transform
     """
     # generic name for the class:
-    gen_name = 'XOR'
+    gen_name = 'XOR with 8 bits static key A. Parameters: A (1-FF).'
     gen_id   = 'xor'
 
     def __init__(self, params):
@@ -266,7 +268,7 @@ class Transform_XOR_INC (Transform_string):
     XOR Transform, with incrementing key
     """
     # generic name for the class:
-    gen_name = 'XOR INC'
+    gen_name = 'XOR with 8 bits key A incrementing after each character. Parameters: A (0-FF).'
     gen_id   = 'xor_inc'
 
     def __init__(self, params):
@@ -299,7 +301,7 @@ class Transform_XOR_DEC (Transform_string):
     XOR Transform, with decrementing key
     """
     # generic name for the class:
-    gen_name = 'XOR DEC'
+    gen_name = 'XOR with 8 bits key A decrementing after each character. Parameters: A (0-FF).'
     gen_id   = 'xor_dec'
 
     def __init__(self, params):
@@ -332,7 +334,7 @@ class Transform_XOR_INC_ROL (Transform_string):
     XOR Transform, with incrementing key, then ROL N bits
     """
     # generic name for the class:
-    gen_name = 'XOR INC ROL'
+    gen_name = 'XOR with 8 bits key A incrementing after each character, then rotate B bits left. Parameters: A (0-FF), B (1-7).'
     gen_id   = 'xor_inc_rol'
 
     def __init__(self, params):
@@ -372,7 +374,7 @@ class Transform_SUB_INC (Transform_string):
     SUB Transform, with incrementing key
     """
     # generic name for the class:
-    gen_name = 'SUB INC'
+    gen_name = 'SUB with 8 bits key A incrementing after each character. Parameters: A (0-FF).'
     gen_id   = 'sub_inc'
 
     def __init__(self, params):
@@ -416,7 +418,7 @@ class Transform_XOR_Chained (Transform_string):
     xor_chained(c[i], key) = c[i] xor c[i-1] xor key
     """
     # generic name for the class:
-    gen_name = 'XOR Chained'
+    gen_name = 'XOR with 8 bits key A chained with previous character. Parameters: A (1-FF).'
     gen_id   = 'xor_chained'
 
     def __init__(self, params):
@@ -454,7 +456,7 @@ class Transform_XOR_RChained (Transform_string):
     xor_rchained(c[i], key) = c[i] xor c[i+1] xor key
     """
     # generic name for the class:
-    gen_name = 'XOR RChained'
+    gen_name = 'XOR with 8 bits key A chained with next character (Reverse order from end to start). Parameters: A (1-FF).'
     gen_id   = 'xor_rchained'
 
     def __init__(self, params):
@@ -497,7 +499,7 @@ class Transform_XOR_RChainedAll (Transform_string):
     xor_rchained_all(c[i], key) = c[i] xor key xor c[i+1] xor c[i+2]... xor c[N]
     """
     # generic name for the class:
-    gen_name = 'XOR RChained All'
+    gen_name = 'XOR Transform, chained from the right with all following characters. Only works well with bbharvest.'
     gen_id   = 'xor_rchained_all'
 
     def __init__(self, params):
@@ -540,7 +542,7 @@ class Transform_XOR_ROL (Transform_char):
     XOR+ROL Transform - first XOR, then ROL
     """
     # generic name for the class:
-    gen_name = 'XOR then ROL'
+    gen_name = 'XOR with static 8 bits key A, then rotate B bits left. Parameters: A (1-FF), B (1-7).'
     gen_id   = 'xor_rol'
 
     def __init__(self, params):
@@ -556,7 +558,7 @@ class Transform_XOR_ROL (Transform_char):
     @staticmethod
     def iter_params ():
         "return (XOR key, ROL bits)"
-        # the XOR key can be 1 to 255 (0 would be identity)
+        # the XOR key can be 1 to 255 (0 would be like ROL)
         for xor_key in xrange(1,256):
             # the ROL bits can be 1 to 7:
             for rol_bits in xrange(1,8):
@@ -569,7 +571,7 @@ class Transform_ADD (Transform_char):
     ADD Transform
     """
     # generic name for the class:
-    gen_name = 'ADD'
+    gen_name = 'ADD with 8 bits static key A. Parameters: A (1-FF).'
     gen_id   = 'add'
 
     def __init__(self, params):
@@ -596,7 +598,7 @@ class Transform_ADD_ROL (Transform_char):
     ADD+ROL Transform - first ADD, then ROL
     """
     # generic name for the class:
-    gen_name = 'ADD then ROL'
+    gen_name = 'ADD with static 8 bits key A, then rotate B bits left. Parameters: A (1-FF), B (1-7).'
     gen_id   = 'add_rol'
 
     def __init__(self, params):
@@ -612,7 +614,7 @@ class Transform_ADD_ROL (Transform_char):
     @staticmethod
     def iter_params ():
         "return (ADD key, ROL bits)"
-        # the ADD key can be 1 to 255 (0 would be identity)
+        # the ADD key can be 1 to 255 (0 would be like ROL)
         for add_key in xrange(1,256):
             # the ROL bits can be 1 to 7:
             for rol_bits in xrange(1,8):
@@ -625,7 +627,7 @@ class Transform_ROL_ADD (Transform_char):
     ROL+ADD Transform - first ROL, then ADD
     """
     # generic name for the class:
-    gen_name = 'ROL then ADD'
+    gen_name = 'rotate A bits left, then ADD with static 8 bits key B. Parameters: A (1-7), B (1-FF).'
     gen_id   = 'rol_add'
 
     def __init__(self, params):
@@ -654,7 +656,7 @@ class Transform_XOR_ADD (Transform_char):
     XOR+ADD Transform - first XOR, then ADD
     """
     # generic name for the class:
-    gen_name = 'XOR then ADD'
+    gen_name = 'XOR with 8 bits static key A, then ADD with 8 bits static key B. Parameters: A (1-FF), B (1-FF).'
     gen_id   = 'xor_add'
 
     def __init__(self, params):
@@ -683,7 +685,7 @@ class Transform_ADD_XOR (Transform_char):
     ADD+XOR Transform - first ADD, then XOR
     """
     # generic name for the class:
-    gen_name = 'ADD then XOR'
+    gen_name = 'ADD with 8 bits static key A, then XOR with 8 bits static key B. Parameters: A (1-FF), B (1-FF).'
     gen_id   = 'add_xor'
 
     def __init__(self, params):
@@ -719,7 +721,7 @@ transform_classes1 = [
     ]
 
 # Transforms level 2
-transform_classes2 = transform_classes1 + [
+transform_classes2 = [
     Transform_XOR_ADD,
     Transform_ADD_XOR,
     Transform_XOR_INC,
@@ -727,13 +729,16 @@ transform_classes2 = transform_classes1 + [
     Transform_SUB_INC,
     Transform_XOR_Chained,
     Transform_XOR_RChained,
-    Transform_XOR_RChainedAll,
     ]
 
 # Transforms level 3
-transform_classes3 = transform_classes2 + [
+transform_classes3 = [
     Transform_XOR_INC_ROL,
+    Transform_XOR_RChainedAll,
     ]
+
+# all transforms
+transform_classes_all = transform_classes1 + transform_classes2 + transform_classes3
 
 
 #--- PATTERNS -----------------------------------------------------------------
@@ -777,6 +782,67 @@ bbcrack_patterns = [
 ]
 
 
+#=== FUNCTIONS ================================================================
+
+def list_transforms ():
+    """
+    Display the list of available transforms on the console, grouped by level.
+    Then exit the application.
+    """
+    print 'Available transforms - Level 1:'
+    for Transform in transform_classes1:
+        print '- %s: %s' % (Transform.gen_id, Transform.gen_name)
+    print ''
+    print 'Level 2:'
+    for Transform in transform_classes2:
+        print '- %s: %s' % (Transform.gen_id, Transform.gen_name)
+    print ''
+    print 'Level 3:'
+    for Transform in transform_classes3:
+        print '- %s: %s' % (Transform.gen_id, Transform.gen_name)
+    sys.exit()
+
+
+def select_transforms (level=2, incremental_level=None, transform_names=None):
+    """
+    Select transform based on options, by order or precedence:
+    - transform_names: str, comma-separated list of transform ids
+    - incremental_level: int or None, only the transforms from that level
+    - level: int, all transforms up to that level
+    """
+    # First check transform_names:
+    if transform_names is not None:
+        # options.transform is either a transform name, or a comma-separated list
+        transform_classes = []
+        trans_names = transform_names.split(',')
+        for tname in trans_names:
+            for trans in transform_classes_all:
+                if trans.gen_id == tname:
+                    transform_classes.append(trans)
+        # check if any transform was found:
+        if len(transform_classes) == 0:
+            sys.exit('Transform "%s" does not exist. Use "-t list" to see all available transforms.' % options.transform)
+        return transform_classes
+
+    # then incremental level:
+    if incremental_level is not None:
+        if   incremental_level == 1:
+            transform_classes = transform_classes1
+        elif incremental_level == 2:
+            transform_classes = transform_classes2
+        else:
+            transform_classes = transform_classes3
+        return transform_classes
+
+    # otherwise, simple level:
+    if level == 1:
+        transform_classes = transform_classes1
+    elif level == 2:
+        transform_classes = transform_classes1 + transform_classes2
+    else:
+        transform_classes = transform_classes_all
+    return transform_classes
+
 
 
 #=== MAIN =====================================================================
@@ -802,10 +868,7 @@ if __name__ == '__main__':
 
     # if option "-t list", display list of transforms and quit:
     if options.transform == 'list':
-        print 'Available transforms:'
-        for Transform in transform_classes3:
-            print '- %s: %s' % (Transform.gen_id, Transform.gen_name)
-        sys.exit()
+        list_transforms()
 
     # Print help if no argurments are passed
     if len(args) == 0:
@@ -828,24 +891,8 @@ if __name__ == '__main__':
         raw_data = f.read()
         f.close()
 
-    if   options.level == 1:
-        transform_classes = transform_classes1
-    elif options.level == 2:
-        transform_classes = transform_classes2
-    else:
-        transform_classes = transform_classes3
-
-    if options.transform:
-        # options.transform is either a transform name, or a comma-separated list
-        transform_classes = []
-        trans_names = options.transform.split(',')
-        for tname in trans_names:
-            for trans in transform_classes3:
-                if trans.gen_id == tname:
-                    transform_classes.append(trans)
-        # check if any transform was found:
-        if len(transform_classes) == 0:
-            sys.exit('Transform "%s" does not exist. Use "-t list" to see all available transforms.' % options.transform)
+    transform_classes = select_transforms(level=options.level,
+        incremental_level=None, transform_names=options.transform)
 
     # STAGE 1: quickly count some significant characters to select best transforms
     print 'STAGE 1: quickly counting simple patterns for all transforms'
