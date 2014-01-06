@@ -503,6 +503,7 @@ try:
     main_dir = os.path.relpath(main_dir)
 except:
     pass
+plugins_dir = os.path.join(main_dir, 'plugins')
 
 # load patterns
 patfile = os.path.join(main_dir, 'patterns.py')
@@ -534,7 +535,6 @@ if __name__ == '__main__':
         sys.exit()
 
     # load plugins
-    plugins_dir = os.path.join(main_dir, 'plugins')
     for f in rglob(plugins_dir, 'bbz*.py'): # glob.iglob('plugins/bbz*.py'):
         print 'Loading plugin from', f
         execfile(f)

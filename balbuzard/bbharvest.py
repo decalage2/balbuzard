@@ -1,5 +1,5 @@
 """
-bbharvest - v0.04 2014-01-04 Philippe Lagadec
+bbharvest - v0.05 2014-01-06 Philippe Lagadec
 
 bbharvest is a tool to analyse malware that uses obfuscation such as XOR, ROL,
 ADD (and many combinations) to hide information such as IP addresses, domain
@@ -38,7 +38,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.04'
+__version__ = '0.05'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -49,12 +49,12 @@ __version__ = '0.04'
 # 2013-12-09 v0.03 PL: - merged patterns list with balbuzard in patterns.py
 # 2014-01-04 v0.04 PL: - use functions from bbcrack to simplify main
 #                      - added -i option for incremental level
+# 2014-01-06 v0.05 PL: - added the possibility to write transform plugins
 
 
 #------------------------------------------------------------------------------
 # TODO:
 # + avoid duplicate code in main, using functions in bbcrack
-# + plugin dir to load user transforms and patterns (using exec or import?)
 # + option to save copy of every matching file
 # + csv output for profiling mode
 # + main: same fix as balbuzard for fname in zip
@@ -167,6 +167,9 @@ if __name__ == '__main__':
         help='profiling: measure time spent on each pattern.')
 
     (options, args) = parser.parse_args()
+
+    # load transform plugins
+    load_plugins()
 
     # if option "-t list", display list of transforms and quit:
     if options.transform == 'list':

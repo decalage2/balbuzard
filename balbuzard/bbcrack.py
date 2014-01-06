@@ -1,5 +1,5 @@
 """
-bbcrack - v0.08 2014-01-04 Philippe Lagadec
+bbcrack - v0.09 2014-01-06 Philippe Lagadec
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -36,7 +36,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.08'
+__version__ = '0.09'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -56,6 +56,7 @@ __version__ = '0.08'
 # 2014-01-04 v0.08 PL: - improved transform names
 #                      - moved code from main to functions
 #                      - added -i option for incremental level
+# 2014-01-06 v0.09 PL: - added the possibility to write transform plugins
 
 
 #------------------------------------------------------------------------------
@@ -67,7 +68,6 @@ __version__ = '0.08'
 # + profiling to see which patterns take more time => find which regex hangs
 # + increase default params - k=30 s=5?
 # + two stage regex, or string+regex, multiple strings, stop after 1 match
-# + plugin dir to load user transforms and patterns (using exec or import?)
 # + move main code to functions
 # + test yara engine to see if faster
 # - merge regex of same weight to improve speed?
@@ -866,6 +866,26 @@ def read_file(filename, zip_password=None):
     return raw_data
 
 
+def add_transform (transform, level=2):
+    """
+    Add a Transform to the given level.
+    (to be used for transform plugins)
+    """
+    if level == 1:
+        transform_classes1.append(transform)
+    elif level == 2:
+        transform_classes2.append(transform)
+    else:
+        transform_classes3.append(transform)
+
+
+def load_plugins ():
+    """
+    Load plugin scripts
+    """
+    for f in balbuzard.rglob(balbuzard.plugins_dir, 'trans*.py'):
+        print 'Loading transform plugin from', f
+        execfile(f)
 
 
 #=== MAIN =====================================================================
@@ -890,6 +910,9 @@ if __name__ == '__main__':
         help='profiling: measure time spent on each pattern.')
 
     (options, args) = parser.parse_args()
+
+    # load transform plugins
+    load_plugins()
 
     # if option "-t list", display list of transforms and quit:
     if options.transform == 'list':
