@@ -232,7 +232,7 @@ pat_mzpe = Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", we
 pat_exemsg = Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=10000)
 pat_exe_fname = Pattern_re("Executable filename", r"\b\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR|CLASS|JAR)\b", nocase=True, weight=10)
 pat_upx = Pattern("EXE: UPX header", "UPX")
-pat_section = Pattern("EXE: section name", ".text|.data|.rdata|.rsrc".split('|'), nocase=True, weight=10) #nocase?
+pat_section = Pattern("EXE: section name", ".text|.data|.rdata|.rsrc|.reloc".split('|'), nocase=True, weight=10) #nocase?
 pat_petite = Pattern("EXE: packed with Petite", ".petite", nocase=True, weight=10) #nocase?
 pat_win32 = Pattern("EXE: interesting Win32 function names", "WriteFile|IsDebuggerPresent|RegSetValue|CreateRemoteThread".split('|'), weight=10000)  #nocase?
 pat_winsock = Pattern("EXE: interesting WinSock function names", "WS2_32.dll|WSASocket|WSASend|WSARecv".split('|'), nocase=True, weight=10000) #nocase?
