@@ -71,13 +71,13 @@ __version__ = '0.15'
 #                      - now short display is default, -v for hex view
 # 2013-12-09 v0.15 PL: - Pattern_re: added filter function to ignore false
 #                        positives
+# 2014-01-11 v0.16 PL: - added riglob, ziglob
 
 
 #------------------------------------------------------------------------------
 # TODO:
 # + add yara plugins support to Balbuzard.count and scan_profiling
 # + merge Balbuzard.scan_hexdump and short
-# + batch mode to scan several files when using wildcards
 # + option to choose which plugins to load: all (default), none, python or yara
 #   only
 # + option to use the Yara-python engine for searching (translating balbuzard
@@ -96,6 +96,8 @@ __version__ = '0.15'
 # - export to OpenIOC?
 # ? zip file: open all files instead of only the 1st one, or add an option to
 #   specify the filename(s) to open within the zip, with wildcards?
+# + option -r to find files recursively in subdirs
+# + option -f to find files within zips, with wildcards (default=*)
 
 
 # ISSUES:
@@ -456,14 +458,42 @@ def str_find_all(a_str, sub):
 # inspired by http://stackoverflow.com/questions/14798220/how-can-i-search-sub-folders-using-glob-glob-module-in-python
 def rglob (path, pattern='*.*'):
     """
+    Recusrive glob:
     similar to glob.glob, but finds files recursively in all subfolders of path.
     path: root directory where to search files
     pattern: pattern for filenames, using wildcards, e.g. *.txt
     """
-    # more compatible API with glob: use single param, split path from pattern
+    #TODO: more compatible API with glob: use single param, split path from pattern
     return [os.path.join(dirpath, f)
         for dirpath, dirnames, files in os.walk(path)
         for f in fnmatch.filter(files, pattern)]
+
+
+def riglob (pathname):
+    """
+    Recursive iglob:
+    similar to glob.iglob, but finds files recursively in all subfolders of path.
+    pathname: root directory where to search files followed by pattern for
+    filenames, using wildcards, e.g. *.txt
+    """
+    path, filespec = os.path.split(pathname)
+    for dirpath, dirnames, files in os.walk(path):
+        for f in fnmatch.filter(files, filespec):
+            yield os.path.join(dirpath, f)
+
+
+def ziglob (zipfileobj, pathname):
+    """
+    iglob in a zip:
+    similar to glob.iglob, but finds files within a zip archive.
+    - zipfileobj: zipfile.ZipFile object
+    - pathname: root directory where to search files followed by pattern for
+    filenames, using wildcards, e.g. *.txt
+    """
+    files = zipfileobj.namelist()
+    for f in files: print f
+    for f in fnmatch.filter(files, pathname):
+        yield f
 
 
 def main_is_frozen():
@@ -503,7 +533,9 @@ try:
     main_dir = os.path.relpath(main_dir)
 except:
     pass
+#print 'main dir:', main_dir
 plugins_dir = os.path.join(main_dir, 'plugins')
+#print 'plugins dir:', plugins_dir
 
 # load patterns
 patfile = os.path.join(main_dir, 'patterns.py')
