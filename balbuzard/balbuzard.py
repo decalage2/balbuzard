@@ -1,5 +1,5 @@
 """
-balbuzard - v0.15 2013-12-09 Philippe Lagadec
+balbuzard - v0.16 2014-01-14 Philippe Lagadec
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
@@ -35,7 +35,7 @@ usage: balbuzard [options] <file> [file2 ... fileN]
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = '0.15'
+__version__ = '0.16'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -71,7 +71,9 @@ __version__ = '0.15'
 #                      - now short display is default, -v for hex view
 # 2013-12-09 v0.15 PL: - Pattern_re: added filter function to ignore false
 #                        positives
-# 2014-01-11 v0.16 PL: - added riglob, ziglob
+# 2014-01-14 v0.16 PL: - added riglob, ziglob
+#                      - new option -r to find files recursively in subdirs
+#                      - new option -f to find files within zips with wildcards
 
 
 #------------------------------------------------------------------------------
@@ -96,8 +98,6 @@ __version__ = '0.15'
 # - export to OpenIOC?
 # ? zip file: open all files instead of only the 1st one, or add an option to
 #   specify the filename(s) to open within the zip, with wildcards?
-# + option -r to find files recursively in subdirs
-# + option -f to find files within zips, with wildcards (default=*)
 
 
 # ISSUES:
@@ -522,6 +522,37 @@ def get_main_dir():
         return os.path.dirname(os.path.abspath(sys.argv[0]))
 
 
+def iter_files(files, recursive=False, zip_password=None, zip_fname='*'):
+    """
+    Open each file provided as argument:
+    - files is a list of arguments
+    - if zip_password is None, each file is opened and read as-is. Wilcards are
+      supported.
+    - if not, then each file is opened as a zip archive with the provided password
+    - then files matching zip_fname are opened from the zip archive
+    Iterator: yields (filename, data) for each file
+    """
+    # choose recursive or non-recursive iglob:
+    if recursive:
+        iglob = riglob
+    else:
+        iglob = glob.iglob
+    for filespec in files:
+        for filename in iglob(filespec):
+            if options.zip_password is not None:
+                # Each file is a zip archive:
+                print 'Opening zip archive %s with provided password' % filename
+                z = zipfile.ZipFile(filename, 'r')
+                print 'Looking for file(s) matching "%s"' % zip_fname
+                for filename in ziglob(z, zip_fname):
+                    print 'Opening file in zip archive:', filename
+                    data = z.read(filename, zip_password)
+                    yield filename, data
+            else:
+                # normal file
+                print 'Opening file', filename
+                data = open(filename, 'rb').read()
+                yield filename, data
 
 
 #=== MAIN =====================================================================
@@ -555,8 +586,12 @@ if __name__ == '__main__':
         help='export results to a CSV file')
     parser.add_option("-v", action="store_true", dest="verbose",
         help='verbose display, with hex view.')
+    parser.add_option("-r", action="store_true", dest="recursive",
+        help='find files recursively in subdirectories.')
     parser.add_option("-z", "--zip", dest='zip_password', type='str', default=None,
         help='if the file is a zip archive, open first file from it, using the provided password (requires Python 2.6+)')
+    parser.add_option("-f", "--zipfname", dest='zip_fname', type='str', default='*',
+        help='if the file is a zip archive, file(s) to be opened within the zip. Wildcards * and ? are supported. (default:*)')
 
     (options, args) = parser.parse_args()
 
@@ -590,28 +625,14 @@ if __name__ == '__main__':
 
 
     # scan each file provided as argument:
-    for arg in args:
-        for fname in glob.iglob(arg):
-            print "="*79
-            print "File: %s\n" % fname
-            if options.zip_password is not None:
-                # extract 1st file from zip archive, using password
-                pwd = options.zip_password
-                print 'Opening zip archive %s with password "%s"' % (fname, pwd)
-                z = zipfile.ZipFile(fname, 'r')
-                fname = z.infolist()[0].filename
-                print 'Opening first file in zip archive:', fname
-                data = z.read(z.infolist()[0], pwd)
-            else:
-                # normal file
-                print 'Opening file', fname
-                data = open(fname, 'rb').read()
-
-            if MAGIC:
-                print "Filetype according to magic: %s\n" % magic.whatis(data)
-
-            bbz = Balbuzard(patterns, yara_rules=yara_rules)
-            bbz.scan_display(data, fname, hexdump=options.verbose, csv_writer=csv_writer)
+    for filename, data in iter_files(args, options.recursive,
+        options.zip_password, options.zip_fname):
+        print "="*79
+        print "File: %s\n" % filename
+        if MAGIC:
+            print "Filetype according to magic: %s\n" % magic.whatis(data)
+        bbz = Balbuzard(patterns, yara_rules=yara_rules)
+        bbz.scan_display(data, filename, hexdump=options.verbose, csv_writer=csv_writer)
 
     # close CSV file
     if options.csv:
