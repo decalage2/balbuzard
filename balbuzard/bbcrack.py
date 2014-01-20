@@ -1,5 +1,5 @@
 """
-bbcrack - v0.09 2014-01-06 Philippe Lagadec
+bbcrack - v0.10 2014-01-20 Philippe Lagadec
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -36,7 +36,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.09'
+__version__ = '0.10'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -57,10 +57,13 @@ __version__ = '0.09'
 #                      - moved code from main to functions
 #                      - added -i option for incremental level
 # 2014-01-06 v0.09 PL: - added the possibility to write transform plugins
+# 2014-01-20 v0.10 PL: - added Transform_ROL, added patterns for stage 1
 
 
 #------------------------------------------------------------------------------
 #TODO
+# + improve display for stage 1 results (option to be more verbose?)
+# + patterns for stage 1 and 2 should be more coherent
 # + -e option to encrypt output files with zip password
 # + -f option to select file(s) within zip instead of the 1st one
 # + declare patterns only once in a separate module, use variables to create
@@ -538,6 +541,33 @@ class Transform_XOR_RChainedAll (Transform_string):
 
 
 #------------------------------------------------------------------------------
+class Transform_ROL (Transform_char):
+    """
+    ROL Transform
+    """
+    # generic name for the class:
+    gen_name = 'ROL - rotate A bits left. Parameters: A (1-7).'
+    gen_id   = 'rol'
+
+    def __init__(self, params):
+        self.params = params
+        self.name = "ROL %d" % params
+        self.shortname = "rol%d" % params
+
+    def transform_char (self, char):
+        # here params is an int
+        rol_bits = self.params
+        return chr(rol(ord(char), rol_bits))
+
+    @staticmethod
+    def iter_params ():
+        "return (ROL bits)"
+        # the ROL bits can be 1 to 7:
+        for rol_bits in xrange(1,8):
+            yield rol_bits
+
+
+#------------------------------------------------------------------------------
 class Transform_XOR_ROL (Transform_char):
     """
     XOR+ROL Transform - first XOR, then ROL
@@ -716,6 +746,7 @@ transform_classes1 = [
     Transform_identity,
     Transform_XOR,
     Transform_ADD,
+    Transform_ROL,
     Transform_XOR_ROL,
     Transform_ADD_ROL,
     Transform_ROL_ADD,
@@ -755,10 +786,26 @@ bbcrack_patterns_stage1 = [
     Pattern('http URL start', 'http://', weight=10000),
     Pattern('https URL start', 'https://', weight=10000),
     Pattern('ftp URL start', 'ftp://', weight=10000),
-    Pattern('EXE PE section', ['.text', '.data', '.rsrc'], weight=10000),
-    Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=100000),
+    Pattern('EXE PE section', ['.text', '.data', '.rdata', '.rsrc', '.reloc'], weight=10000),
+    Pattern('Frequent strings in EXE', ['program', 'cannot', 'mode',
+        'microsoft', 'kernel32', 'version', 'assembly', 'xmlns', 'schemas',
+        'manifestVersion', 'security', 'win32'], nocase=True, weight=10000),
+    Pattern('Common English words likely to be found in malware', ['this',
+        'file', 'open', 'enter', 'password', 'service', 'process', 'type',
+        'system', 'error'], nocase=True, weight=10000),
+    Pattern('Common file extensions in malware', ['.exe', '.dll', '.pdf'],
+        nocase=True, weight=10000),
+    Pattern('Common TLDs in domain names', ['.com', '.org', '.net', '.edu',
+        '.ru', '.cn', '.co.uk'], nocase=True, weight=10000),
+    Pattern('Common hostnames in URLs', ['www.', 'smtp.', 'pop.'],
+        nocase=True, weight=10000),
+    Pattern('Frequent Win32 function names', ['GetCurrent', 'Thread'], weight=10000),
+    #Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=100000),
     ]
 
+#TODO:
+# - other frequent Win32 function names
+# - frequent unicode strings
 
 # specific patterns for cracking (simpler than Balbuzard, for speed):
 # Here it's better to be simple and fast than accurate
