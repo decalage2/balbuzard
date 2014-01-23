@@ -203,6 +203,25 @@ def email_filter (value, index=0, pattern=None):
     return True
 
 
+def str_filter (value, index=0, pattern=None):
+    """
+    String filter: avoid false positives with random case. A typical string
+    should be either:
+    - all UPPERCASE
+    - all lowercase
+    - or Capitalized
+    return True if OK, False otherwise.
+    Usage: This filter is meant to be used with string patterns that catch words
+    with the option nocase=True, but where random case is not likely.
+    Note 1: It is assumed the string only contains alphabetical characters (a-z)
+    Note 2: this filter does not cover CamelCase strings.
+    """
+    # case 1: all UPPERCASE
+    # case 2: all lowercase except 1st character which can be uppercase (Capitalized)
+    if value.isupper() or value[1:].islower(): return True
+    #Note: we could also use istitle() if strings are not only alphabetical.
+
+
 #=== PATTERNS =================================================================
 
 # NOTES:
@@ -351,16 +370,17 @@ bbcrack_patterns_stage1 = [
     Pattern('EXE PE section', ['.text', '.data', '.rdata', '.rsrc', '.reloc'], weight=10000),
     Pattern('Frequent strings in EXE', ['program', 'cannot', 'mode',
         'microsoft', 'kernel32', 'version', 'assembly', 'xmlns', 'schemas',
-        'manifestVersion', 'security', 'win32'], nocase=True, weight=10000),
+        'manifestVersion', 'security', 'win32'], nocase=True, filt=str_filter,
+        weight=10000),
     Pattern('Common English words likely to be found in malware', ['this',
         'file', 'open', 'enter', 'password', 'service', 'process', 'type',
-        'system', 'error'], nocase=True, weight=10000),
+        'system', 'error'], nocase=True, filt=str_filter, weight=10000),
     Pattern('Common file extensions in malware', ['.exe', '.dll', '.pdf'],
-        nocase=True, weight=10000),
+        nocase=True, filt=str_filter, weight=10000),
     Pattern('Common TLDs in domain names', ['.com', '.org', '.net', '.edu',
-        '.ru', '.cn', '.co.uk'], nocase=True, weight=10000),
+        '.ru', '.cn', '.co.uk'], nocase=True, filt=str_filter, weight=10000),
     Pattern('Common hostnames in URLs', ['www.', 'smtp.', 'pop.'],
-        nocase=True, weight=10000),
+        nocase=True, filt=str_filter, weight=10000),
     Pattern('Frequent Win32 function names', ['GetCurrent', 'Thread'], weight=10000),
     #Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=100000),
     ]
