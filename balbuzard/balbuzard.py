@@ -1,5 +1,5 @@
 """
-balbuzard - v0.16 2014-01-14 Philippe Lagadec
+balbuzard - v0.17 2014-01-23 Philippe Lagadec
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
@@ -35,7 +35,7 @@ usage: balbuzard [options] <file> [file2 ... fileN]
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = '0.16'
+__version__ = '0.17'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -74,6 +74,7 @@ __version__ = '0.16'
 # 2014-01-14 v0.16 PL: - added riglob, ziglob
 #                      - new option -r to find files recursively in subdirs
 #                      - new option -f to find files within zips with wildcards
+# 2014-01-23 v0.17 PL: - Pattern: added partial support for filter function
 
 
 #------------------------------------------------------------------------------
@@ -137,9 +138,13 @@ class Pattern (object):
         - nocase: bool, if True, search is case-insensitive
         - single: bool, if True search will stop at the first occurence
         - weight: int, weight used by balbucrack
+        - filt: function to filter out false positives, should be a function
+          with arguments (value, index, pattern), returning True when acceptable
+          or False when it is a false positive.
     """
 
-    def __init__(self, name, pat=None, nocase=False, single=False, weight=1):
+    def __init__(self, name, pat=None, nocase=False, single=False, weight=1,
+        filt=None):
         self.name = name
         # self.pat should always be a list of strings:
         if isinstance(pat, str):
@@ -155,6 +160,7 @@ class Pattern (object):
         self.weight = weight
         # for profiling:
         self.total_time = 0
+        self.filter = filt
 
 
     def find_all (self, data, data_lower=None):
@@ -174,7 +180,14 @@ class Pattern (object):
         for s in pat:
             l = len(s)
             for i in str_find_all(d, s):
-                found.append((i, data[i:i+len(s)]))
+                # the matched string is not always s, case can differ:
+                match = data[i:i+len(s)]
+                valid = True
+                if self.filter is not None:
+                    valid = self.filter(value=match, index=i, pattern=self)
+                if valid: found.append((i, match))
+                # debug message:
+                else: print 'Filtered out %s: %s' % (self.name, repr(match))
         return found
 
 
@@ -187,6 +200,7 @@ class Pattern (object):
         patterns (it's better to do it only once)
         return an integer
         """
+        #TODO: add support for filter? (will be much slower...)
         count = 0
         if self.nocase:
             d = data_lower
