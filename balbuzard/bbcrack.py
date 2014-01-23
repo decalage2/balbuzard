@@ -1,5 +1,5 @@
 """
-bbcrack - v0.10 2014-01-20 Philippe Lagadec
+bbcrack - v0.11 2014-01-23 Philippe Lagadec
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -36,7 +36,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.10'
+__version__ = '0.11'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -58,12 +58,14 @@ __version__ = '0.10'
 #                      - added -i option for incremental level
 # 2014-01-06 v0.09 PL: - added the possibility to write transform plugins
 # 2014-01-20 v0.10 PL: - added Transform_ROL, added patterns for stage 1
+# 2014-01-23 v0.11 PL: - moved and merged patterns into patterns.py
 
 
 #------------------------------------------------------------------------------
 #TODO
+# + stage 2: ignore transforms with score=0
 # + improve display for stage 1 results (option to be more verbose?)
-# + patterns for stage 1 and 2 should be more coherent
+# + patterns for stage 1 and 2 should be more coherent (include stage 1 results)
 # + -e option to encrypt output files with zip password
 # + -f option to select file(s) within zip instead of the 1st one
 # + declare patterns only once in a separate module, use variables to create
@@ -111,7 +113,7 @@ import sys, os, time, optparse, zipfile
 from operator import itemgetter, attrgetter
 
 import balbuzard
-from balbuzard import Pattern, Pattern_re
+from balbuzard import Pattern, Pattern_re, bbcrack_patterns, bbcrack_patterns_stage1
 
 
 #--- CLASSES ------------------------------------------------------------------
@@ -775,60 +777,7 @@ transform_classes_all = transform_classes1 + transform_classes2 + transform_clas
 
 #--- PATTERNS -----------------------------------------------------------------
 
-# simple patterns for initial, fast filtering of best candidates
-# (only used for counting - avoid regex)
-bbcrack_patterns_stage1 = [
-    Pattern('spaces', ' '),
-    Pattern('nulls', '\x00'),
-    Pattern('newlines', '\x0D\x0A', weight=100),
-    Pattern('spaces blob', ' '*32, weight=100),
-    Pattern('nulls blob', '\x00'*32, weight=100),
-    Pattern('http URL start', 'http://', weight=10000),
-    Pattern('https URL start', 'https://', weight=10000),
-    Pattern('ftp URL start', 'ftp://', weight=10000),
-    Pattern('EXE PE section', ['.text', '.data', '.rdata', '.rsrc', '.reloc'], weight=10000),
-    Pattern('Frequent strings in EXE', ['program', 'cannot', 'mode',
-        'microsoft', 'kernel32', 'version', 'assembly', 'xmlns', 'schemas',
-        'manifestVersion', 'security', 'win32'], nocase=True, weight=10000),
-    Pattern('Common English words likely to be found in malware', ['this',
-        'file', 'open', 'enter', 'password', 'service', 'process', 'type',
-        'system', 'error'], nocase=True, weight=10000),
-    Pattern('Common file extensions in malware', ['.exe', '.dll', '.pdf'],
-        nocase=True, weight=10000),
-    Pattern('Common TLDs in domain names', ['.com', '.org', '.net', '.edu',
-        '.ru', '.cn', '.co.uk'], nocase=True, weight=10000),
-    Pattern('Common hostnames in URLs', ['www.', 'smtp.', 'pop.'],
-        nocase=True, weight=10000),
-    Pattern('Frequent Win32 function names', ['GetCurrent', 'Thread'], weight=10000),
-    #Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=100000),
-    ]
-
-#TODO:
-# - other frequent Win32 function names
-# - frequent unicode strings
-
-# specific patterns for cracking (simpler than Balbuzard, for speed):
-# Here it's better to be simple and fast than accurate
-bbcrack_patterns = [
-##    Pattern('Whitespaces and newline characters', regex=r'\s+'),
-##    Pattern('Null characters', regex=r'\000+'),
-    Pattern_re('Any word longer than 6 chars', r'\b[A-Za-z]{6,}\b'),
-    Pattern_re('Sentence of 3 words or more', r'([A-Za-z]{2,}\s){2,}[A-Za-z]{2,}', weight=1), #TODO: this one seems incomplete
-##    Pattern("IP addresses", regex=r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", weight=100),
-    Pattern_re("IP address", r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", weight=100),
-    Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.&%\$#\=~]+', weight=100),
-    Pattern_re('e-mail address', r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b', weight=10), # adapted from http://www.regular-expressions.info/email.html
-##    Pattern('e-mail address', regex=r'([a-zA-Z0-9_-]+\.)*[a-zA-Z0-9_-]+@([a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+', weight=10),
-    #Pattern('domain name', regex=r'', weight=10),
-    Pattern_re('CamelCase word', r'\b([A-Z][a-z0-9]{2,}){2,}\b', weight=1),
-    Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", weight=100), # (?s) sets the DOTALL flag, so that dot matches any character
-    Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=10000),
-    Pattern_re('Hex blob', r'([A-F0-9][A-F0-9]|[a-f0-9][a-f0-9]){16,}', weight=1),
-    Pattern_re('Base64 blob', r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', weight=1),
-    Pattern("EXE: section name", ".text|.data|.rdata|.rsrc".split('|'), nocase=True, weight=100), #nocase?
-    Pattern("Possible OLE2 header (D0CF)", "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", weight=10),
-]
-
+#see patterns.py
 
 #=== FUNCTIONS ================================================================
 

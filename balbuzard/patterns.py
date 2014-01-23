@@ -1,5 +1,5 @@
 """
-balbuzard patterns - v0.04 2014-01-04 Philippe Lagadec
+balbuzard patterns - v0.05 2014-01-23 Philippe Lagadec
 
 This file contains pattern definitions for the Balbuzard tools.
 
@@ -37,7 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-__version__ = '0.04'
+__version__ = '0.05'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -47,6 +47,8 @@ __version__ = '0.04'
 # 2013-12-09 v0.03 PL: - added filter function for IPv4 addresses
 #                      - moved bbharvest patterns here
 # 2014-01-04 v0.04 PL: - added Java filenames to pat_exe_fnames
+# 2014-01-05 v0.05 PL: - grouped patterns by topic
+#                      - moved and merged patterns from bbcrack
 
 #------------------------------------------------------------------------------
 # TODO:
@@ -65,6 +67,7 @@ __version__ = '0.04'
 # - for some patterns such as e-mail, would be good to have a validation function
 #   on top of regex to filter out false positives. for example using tldextract
 #   or list of TLDs: http://data.iana.org/TLD/tlds-alpha-by-domain.txt.
+# - ipv4_filter: check that all bytes are <=255 (only useful with simple regex)
 
 
 #=== FILTERS ==================================================================
@@ -207,15 +210,24 @@ def email_filter (value, index=0, pattern=None):
 # \b matches a word boundary, it can help speeding up regex search and avoiding
 # some false positives. See http://www.regular-expressions.info/wordboundaries.html
 
+#------------------------------------------------------------------------------
+# IP ADDRESSES
 ##    Pattern_re("IP addresses", r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", weight=10),
 # Here I use \b to make sure there is no other digit around and to speedup search
 pat_ipv4 = Pattern_re("IPv4 address",
     r"\b(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b",
     weight=100, filt=ipv4_filter)
 
-pat_url = Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*[^\.\,\)\(\s]', weight=10)
+#------------------------------------------------------------------------------
+# URLs
+pat_url = Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*[^\.\,\)\(\s]', weight=10000)
+# simpler version for bbcrack:
+pat_url2 = Pattern_re('URL (http/https/ftp)', r'(http|https|ftp)\://[a-zA-Z0-9\-\.&%\$#\=~]+', weight=10000)
+#NOTE: here the score can be high because false positives are less likely, since
+#      it starts with a fixed string.
 
-##    Pattern_re('e-mail address', r'([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=2119
+#------------------------------------------------------------------------------
+# E-MAIL ADDRESSES
 pat_email = Pattern_re('e-mail address',
     ##r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|int|biz|info|mobi|name|aero|asia|jobs|museum)\b',
     # changed to catch all current TLDs registered at IANA (in combination with filter function):
@@ -223,17 +235,29 @@ pat_email = Pattern_re('e-mail address',
     r'(?i)\b[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+(?:[A-Z]{2,12}|XN--[A-Z0-9]{4,18})\b',
     weight=10, filt=email_filter)
     # adapted from http://www.regular-expressions.info/email.html
+##    Pattern_re('e-mail address', r'([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})', weight=10), # source: http://regexlib.com/REDetails.aspx?regexp_id=2119
 
+#------------------------------------------------------------------------------
+# DOMAIN NAMES
 pat_domain = Pattern_re('domain name', r'(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)', weight=10) # source: http://regexlib.com/REDetails.aspx?regexp_id=1319
+#TODO: make it similar to e-mail address, with filter?
 
+#------------------------------------------------------------------------------
+# EXECUTABLE FILES
 pat_mz = Pattern("EXE MZ headers", "MZ|ZM".split('|'))
 pat_pe = Pattern("EXE PE headers", "PE")
 pat_mzpe = Pattern_re("EXE MZ followed by PE", r"(?s)MZ.{32,1024}PE\000\000", weight=100) # (?s) sets the DOTALL flag, so that dot matches any character
 pat_exemsg = Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=10000)
-pat_exe_fname = Pattern_re("Executable filename", r"\b\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR|CLASS|JAR)\b", nocase=True, weight=10)
+pat_section = Pattern("EXE: section name", ".text|.data|.rdata|.rsrc|.reloc".split('|'), nocase=True, weight=100) #nocase?
+
+#------------------------------------------------------------------------------
+# PACKERS
 pat_upx = Pattern("EXE: UPX header", "UPX")
-pat_section = Pattern("EXE: section name", ".text|.data|.rdata|.rsrc|.reloc".split('|'), nocase=True, weight=10) #nocase?
 pat_petite = Pattern("EXE: packed with Petite", ".petite", nocase=True, weight=10) #nocase?
+
+#------------------------------------------------------------------------------
+# INDICATORS
+pat_exe_fname = Pattern_re("Executable filename", r"\b\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR|CLASS|JAR)\b", nocase=True, weight=10)
 pat_win32 = Pattern("EXE: interesting Win32 function names", "WriteFile|IsDebuggerPresent|RegSetValue|CreateRemoteThread".split('|'), weight=10000)  #nocase?
 pat_winsock = Pattern("EXE: interesting WinSock function names", "WS2_32.dll|WSASocket|WSASend|WSARecv".split('|'), nocase=True, weight=10000) #nocase?
 pat_msvcpp = Pattern("EXE: possibly compiled with Microsoft Visual C++", "Microsoft Visual C++", weight=10000)
@@ -243,6 +267,8 @@ pat_filenames = Pattern("Interesting file names", "\\drivers\\etc\\hosts|cmd\.ex
 pat_keywords = Pattern("Interesting keywords", "password|login|pwd|administrator|admin|root|smtp|pop|ftp|ssh|icq|backdoor|vmware".split('|'), nocase=True, weight=100) # removed http
     #Pattern_re("NOP instructions (possible shellcode)", r"\x90{4,}"), # this regex matches 4 NOPs or more
 
+#------------------------------------------------------------------------------
+# FILE PARTS
 pat_ole2 = Pattern("Possible OLE2 header (e.g. MS Office documents)", "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", weight=10)
     #ref: http://msdn.microsoft.com/en-us/library/dd941946.aspx
 pat_vba = Pattern("Possible VBA macros", "VBA") #nocase?
@@ -254,9 +280,25 @@ pat_flashobj2 = Pattern('Flash OLE object 2', 'S\x00h\x00o\x00c\x00k\x00w\x00a\x
 pat_pdf_hdr = Pattern('Possible PDF header', '%PDF-', weight=10)
 pat_pdf_eof = Pattern('Possible PDF end of file marker', '%EOF', weight=10)
 
+
+#------------------------------------------------------------------------------
+# ENCODED DATA
 pat_hex = Pattern_re('Hex blob', r'([A-F0-9][A-F0-9]|[a-f0-9][a-f0-9]){16,}', weight=1)
 pat_b64 = Pattern_re('Base64 blob', r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', weight=1)
 
+
+#------------------------------------------------------------------------------
+#Specific to bbcrack stage 1:
+# see below
+
+#------------------------------------------------------------------------------
+#Specific to bbcrack stage 2:
+pat_word6 = Pattern_re('Any word longer than 6 chars', r'\b[A-Za-z]{6,}\b') #TODO: should not allow random case, either UPPER/lower/Capitalized
+pat_sentence = Pattern_re('Sentence of 3 words or more', r'([A-Za-z]{2,}\s){2,}[A-Za-z]{2,}', weight=1) #TODO: this one seems incomplete
+pat_camelcase_word = Pattern_re('CamelCase word', r'\b([A-Z][a-z0-9]{2,}){2,}\b', weight=1)
+
+
+#=== PATTERN GROUPS ===========================================================
 
 #------------------------------------------------------------------------------
 # Patterns for balbuzard:
@@ -291,7 +333,67 @@ patterns = [
     pat_b64,
     ]
 
+
+#------------------------------------------------------------------------------
+# Patterns for bbcrack:
+
+# Stage 1: simple patterns for initial, fast filtering of best candidates
+# (only used for counting - avoid regex)
+bbcrack_patterns_stage1 = [
+    Pattern('spaces', ' '),
+    Pattern('nulls', '\x00'),
+    Pattern('newlines', '\x0D\x0A', weight=100),
+    Pattern('spaces blob', ' '*8, weight=100),
+    Pattern('nulls blob', '\x00'*8, weight=100),
+    Pattern('http URL start', 'http://', weight=10000),
+    Pattern('https URL start', 'https://', weight=10000),
+    Pattern('ftp URL start', 'ftp://', weight=10000),
+    Pattern('EXE PE section', ['.text', '.data', '.rdata', '.rsrc', '.reloc'], weight=10000),
+    Pattern('Frequent strings in EXE', ['program', 'cannot', 'mode',
+        'microsoft', 'kernel32', 'version', 'assembly', 'xmlns', 'schemas',
+        'manifestVersion', 'security', 'win32'], nocase=True, weight=10000),
+    Pattern('Common English words likely to be found in malware', ['this',
+        'file', 'open', 'enter', 'password', 'service', 'process', 'type',
+        'system', 'error'], nocase=True, weight=10000),
+    Pattern('Common file extensions in malware', ['.exe', '.dll', '.pdf'],
+        nocase=True, weight=10000),
+    Pattern('Common TLDs in domain names', ['.com', '.org', '.net', '.edu',
+        '.ru', '.cn', '.co.uk'], nocase=True, weight=10000),
+    Pattern('Common hostnames in URLs', ['www.', 'smtp.', 'pop.'],
+        nocase=True, weight=10000),
+    Pattern('Frequent Win32 function names', ['GetCurrent', 'Thread'], weight=10000),
+    #Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=100000),
+    ]
+
+#TODO:
+# - other frequent Win32 function names
+# - frequent unicode strings
+
+# specific patterns for cracking (simpler than Balbuzard, for speed):
+# Here it's better to be simple and fast than accurate
+bbcrack_patterns = [
+##    Pattern('Whitespaces and newline characters', regex=r'\s+'),
+##    Pattern('Null characters', regex=r'\000+'),
+    pat_word6,
+    pat_sentence,
+    pat_ipv4,
+    pat_url2,
+    pat_email,
+    #pat_domain,
+    pat_camelcase_word,
+    pat_mzpe,
+    pat_exemsg,
+    pat_hex,
+    pat_b64,
+    pat_section,
+    pat_ole2,
+]
+
+
+#------------------------------------------------------------------------------
 # patterns for bbharvest:
+
+# Similar to balbuzard, with a few differences
 harvest_patterns = [
     pat_ipv4,
     pat_url,
