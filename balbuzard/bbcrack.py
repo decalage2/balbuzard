@@ -1,5 +1,5 @@
 """
-bbcrack - v0.11 2014-01-23 Philippe Lagadec
+bbcrack - v0.12 2014-01-28 Philippe Lagadec
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -36,7 +36,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.11'
+__version__ = '0.12'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -59,11 +59,11 @@ __version__ = '0.11'
 # 2014-01-06 v0.09 PL: - added the possibility to write transform plugins
 # 2014-01-20 v0.10 PL: - added Transform_ROL, added patterns for stage 1
 # 2014-01-23 v0.11 PL: - moved and merged patterns into patterns.py
+# 2014-01-28 v0.12 PL: - ignore transforms with null scores at the end of stage 2
 
 
 #------------------------------------------------------------------------------
 #TODO
-# + stage 2: ignore transforms with score=0
 # + improve display for stage 1 results (option to be more verbose?)
 # + patterns for stage 1 and 2 should be more coherent (include stage 1 results)
 # + -e option to encrypt output files with zip password
@@ -996,15 +996,16 @@ if __name__ == '__main__':
         print 'Transform %s: score=%d\n' % (transform.shortname, score)
         results.append((transform, score, data))
 
-    print '\nHIGHEST SCORES:'
+    print '\nHIGHEST SCORES (>0):'
     results = sorted(results, key=lambda x: x[1], reverse=True)
     # take the best N:
     for transform, score, data in results[:options.save]:
-        print '%s: score %d' % (transform.shortname, score)
-        base, ext = os.path.splitext(fname)
-        fname_trans = base+'_'+transform.shortname+ext
-        print 'saving to file', fname_trans
-        open(fname_trans, 'wb').write(data)
+        if score > 0:
+            print '%s: score %d' % (transform.shortname, score)
+            base, ext = os.path.splitext(fname)
+            fname_trans = base+'_'+transform.shortname+ext
+            print 'saving to file', fname_trans
+            open(fname_trans, 'wb').write(data)
 
 
 
