@@ -1,5 +1,5 @@
 """
-balbuzard patterns - v0.05 2014-01-23 Philippe Lagadec
+balbuzard patterns - v0.06 2014-01-28 Philippe Lagadec
 
 This file contains pattern definitions for the Balbuzard tools.
 
@@ -37,7 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-__version__ = '0.05'
+__version__ = '0.06'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -47,8 +47,9 @@ __version__ = '0.05'
 # 2013-12-09 v0.03 PL: - added filter function for IPv4 addresses
 #                      - moved bbharvest patterns here
 # 2014-01-04 v0.04 PL: - added Java filenames to pat_exe_fnames
-# 2014-01-05 v0.05 PL: - grouped patterns by topic
+# 2014-01-23 v0.05 PL: - grouped patterns by topic
 #                      - moved and merged patterns from bbcrack
+# 2014-01-28 v0.06 PL: - improved word pattern for bbcrack
 
 #------------------------------------------------------------------------------
 # TODO:
@@ -312,7 +313,15 @@ pat_b64 = Pattern_re('Base64 blob', r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2
 
 #------------------------------------------------------------------------------
 #Specific to bbcrack stage 2:
-pat_word6 = Pattern_re('Any word longer than 6 chars', r'\b[A-Za-z]{6,}\b') #TODO: should not allow random case, either UPPER/lower/Capitalized
+
+# A word may either be UPPERCASE/lowercase/Capitalized, but not random case.
+# So either all uppercase [A-Z]
+# Or one any case [A-Za-z] followed by lowercase only [a-z]
+# This is to avoid false positives.
+pat_word6 = Pattern_re('Any word longer than 6 chars', r'\b(?:[A-Z]{6,}|[A-Za-z][a-z]{5,})\b')
+# old simpler version:
+#pat_word6 = Pattern_re('Any word longer than 6 chars', r'\b[A-Za-z]{6,}\b')
+
 pat_sentence = Pattern_re('Sentence of 3 words or more', r'([A-Za-z]{2,}\s){2,}[A-Za-z]{2,}', weight=1) #TODO: this one seems incomplete
 pat_camelcase_word = Pattern_re('CamelCase word', r'\b([A-Z][a-z0-9]{2,}){2,}\b', weight=1)
 
