@@ -294,7 +294,7 @@ pat_ole2 = Pattern("Possible OLE2 header (e.g. MS Office documents)", "\xD0\xCF\
     #ref: http://msdn.microsoft.com/en-us/library/dd941946.aspx
 pat_vba = Pattern("Possible VBA macros", "VBA") #nocase?
 
-pat_flash = Pattern('Possible Flash header', 'SWF|FWS|ZWS'.split('|'))
+pat_flash = Pattern('Possible Flash header', 'FWS|CWS|ZWS'.split('|'))
 pat_flashobj1 = Pattern('Flash OLE object 1', 'ShockwaveFlash.ShockwaveFlash', weight=10)
 pat_flashobj2 = Pattern('Flash OLE object 2', 'S\x00h\x00o\x00c\x00k\x00w\x00a\x00v\x00e\x00F\x00l\x00a\x00s\x00h', weight=10) # warning: this is unicode
 
