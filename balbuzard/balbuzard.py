@@ -584,7 +584,11 @@ plugins_dir = os.path.join(main_dir, 'plugins')
 
 # load patterns
 patfile = os.path.join(main_dir, 'patterns.py')
+# save __doc__, else it seems to be overwritten:
+d = __doc__
 execfile(patfile)
+__doc__ = d
+del d
 
 
 
