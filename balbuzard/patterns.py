@@ -11,31 +11,33 @@ bbcrack uses a new algorithm based on patterns of interest to bruteforce typical
 malware obfuscation such as XOR, ROL, ADD and various combinations.
 
 For more info and updates: http://www.decalage.info/balbuzard
-
-
-balbuzard is copyright (c) 2007-2014, Philippe Lagadec (http://www.decalage.info)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+
+# LICENSE:
+#
+# balbuzard is copyright (c) 2007-2014, Philippe Lagadec (http://www.decalage.info)
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 __version__ = '0.06'
 
@@ -54,7 +56,7 @@ __version__ = '0.06'
 
 #------------------------------------------------------------------------------
 # TODO:
-# + move patterns for bbcrack here
+# + URL pattern: should not match null char at the end
 # + improve regex list with http://regexlib.com
 # - extract list of common strings found in EXE files
 # + add headers from other filetypes (Office, JPEG, archives, RTF, ZIP, ...)
@@ -372,26 +374,26 @@ bbcrack_patterns_stage1 = [
     Pattern('spaces', ' '),
     Pattern('nulls', '\x00'),
     Pattern('newlines', '\x0D\x0A', weight=100),
-    Pattern('spaces blob', ' '*8, weight=100),
-    Pattern('nulls blob', '\x00'*8, weight=100),
-    Pattern('http URL start', 'http://', weight=10000),
-    Pattern('https URL start', 'https://', weight=10000),
-    Pattern('ftp URL start', 'ftp://', weight=10000),
-    Pattern('EXE PE section', ['.text', '.data', '.rdata', '.rsrc', '.reloc'], weight=10000),
+    Pattern('spaces blob', ' '*32, weight=100),
+    Pattern('nulls blob', '\x00'*32, weight=100),
+    Pattern('http URL start', 'http://', weight=100000),
+    Pattern('https URL start', 'https://', weight=100000),
+    Pattern('ftp URL start', 'ftp://', weight=100000),
+    Pattern('EXE PE section', ['.text', '.data', '.rdata', '.rsrc', '.reloc'], weight=100000),
     Pattern('Frequent strings in EXE', ['program', 'cannot', 'mode',
         'microsoft', 'kernel32', 'version', 'assembly', 'xmlns', 'schemas',
         'manifestVersion', 'security', 'win32'], nocase=True, filt=str_filter,
-        weight=10000),
+        weight=100000),
     Pattern('Common English words likely to be found in malware', ['this',
         'file', 'open', 'enter', 'password', 'service', 'process', 'type',
-        'system', 'error'], nocase=True, filt=str_filter, weight=10000),
+        'system', 'error'], nocase=True, filt=str_filter, weight=100000),
     Pattern('Common file extensions in malware', ['.exe', '.dll', '.pdf'],
-        nocase=True, filt=str_filter, weight=10000),
+        nocase=True, filt=str_filter, weight=100000),
     Pattern('Common TLDs in domain names', ['.com', '.org', '.net', '.edu',
         '.ru', '.cn', '.co.uk'], nocase=True, filt=str_filter, weight=10000),
     Pattern('Common hostnames in URLs', ['www.', 'smtp.', 'pop.'],
-        nocase=True, filt=str_filter, weight=10000),
-    Pattern('Frequent Win32 function names', ['GetCurrent', 'Thread'], weight=10000),
+        nocase=True, filt=str_filter, weight=100000),
+    Pattern('Frequent Win32 function names', ['GetCurrent', 'Thread'], weight=100000),
     #Pattern("EXE PE DOS message", "This program cannot be run in DOS mode", nocase=True, weight=100000),
     ]
 
