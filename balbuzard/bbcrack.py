@@ -943,10 +943,13 @@ if __name__ == '__main__':
             # search each pattern in transformed data:
             for pattern, count in bbz1.count(data):
                 score += count*pattern.weight
+                #DEBUG
 ##                print 'Found %d * %s weight=%d' % (
 ##                    count, pattern.name, pattern.weight)
+                #/DEBUG
             msg = '\rTransform %s: stage 1 score=%d          ' % (transform.shortname, score)
             print msg,
+##            print '\n'
 ##            spaces = data.count(' ')
 ##            nulls = data.count('\x00')
 ##            newlines = data.count('\x0D\x0A')
@@ -970,7 +973,7 @@ if __name__ == '__main__':
     results1 = results1[:options.keep]
     print '\nTOP %d SCORES stage 1:' % options.keep
     for res in results1:
-        print res[0].shortname, res[1]
+        print "%20s: %d" % (res[0].shortname, res[1])
 ##    raw_input()
 
     # STAGE 2: search patterns on selected transforms
