@@ -6,8 +6,6 @@ malware analysis (IP addresses, domain names, known file headers and strings,
 etc).
 
 For more info and updates: http://www.decalage.info/balbuzard
-
-usage: balbuzard [options] <file> [file2 ... fileN]
 """
 
 # LICENSE:

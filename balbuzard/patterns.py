@@ -1,5 +1,5 @@
 """
-balbuzard patterns - v0.06 2014-01-28 Philippe Lagadec
+balbuzard patterns - v0.07 2014-02-13 Philippe Lagadec
 
 This file contains pattern definitions for the Balbuzard tools.
 
@@ -39,7 +39,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.06'
+__version__ = '0.07'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -53,6 +53,7 @@ __version__ = '0.06'
 #                      - moved and merged patterns from bbcrack
 # 2014-01-28 v0.06 PL: - improved word pattern for bbcrack
 #                      - improved Flash pattern
+# 2014-02-13 v0.07 PL: - added RTF patterns
 
 #------------------------------------------------------------------------------
 # TODO:
@@ -303,6 +304,8 @@ pat_flashobj2 = Pattern('Flash OLE object 2', 'S\x00h\x00o\x00c\x00k\x00w\x00a\x
 pat_pdf_hdr = Pattern('Possible PDF header', '%PDF-', weight=10)
 pat_pdf_eof = Pattern('Possible PDF end of file marker', '%EOF', weight=10)
 
+pat_rtf_hdr = Pattern('RTF header', '{\\rtf', weight=10)
+pat_rtf_object = Pattern('RTF embedded object', '{\\object', weight=10)
 
 #------------------------------------------------------------------------------
 # ENCODED DATA
@@ -360,6 +363,8 @@ patterns = [
     pat_flashobj2,
     pat_pdf_hdr,
     pat_pdf_eof,
+    pat_rtf_hdr,
+    pat_rtf_object,
     pat_hex,
     pat_b64,
     ]
@@ -451,6 +456,8 @@ harvest_patterns = [
     pat_flashobj2,
     pat_pdf_hdr,
     pat_pdf_eof,
+    pat_rtf_hdr,
+    pat_rtf_object,
     # no detection of hex or Base64 blobs, too many false positives or too slow
 ]
 
