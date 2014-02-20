@@ -5,14 +5,36 @@ Balbuzard
 open-source python tools for malware analysis:
 
 -  **balbuzard** is a tool to extract patterns of interest from
-   malicious files, such as IP addresses, URLs and common file headers.
-   It is easily extensible with patterns, regular expressions and Yara
-   rules.
+   malicious files, such as IP addresses, URLs, embedded files and
+   typical malware strings. It is easily extensible with new patterns,
+   regular expressions and Yara rules.
 -  **bbcrack** uses a new algorithm based on patterns of interest to
    bruteforce typical malware obfuscation such as XOR, ROL, ADD and
-   various combinations.
+   various combinations, in order to guess which algorithms/keys have
+   been used.
+-  **bbharvest** extracts all patterns of interest found when applying
+   transforms such as XOR, ROL, ADD and various combinations, trying all
+   possible keys. It is especially useful when several keys or several
+   transforms are used in a single file.
 -  **bbtrans** can apply any of the transforms from bbcrack (XOR, ROL,
    ADD and various combinations) to a file.
+
+When to use these tools:
+
+-  If you need to analyze a new malicious file, you can first try
+   balbuzard to extract patterns of interest and detect embedded files
+   in cleartext.
+-  Then if you think the malicious file might use an obfuscation
+   algorithm such as XOR to hide interesting data, try bbcrack to find
+   the algorithm and the key(s).
+-  Alternatively, if bbcrack is not successful, or if you think the file
+   may use several algorithms and/or keys, try bbharvest.
+
+Important note: while balbuzard and bbharvest are straightforward and
+readily usable, bbcrack is still an experimental tool and it has not
+been tested on many samples yet. Please `contact
+me <http://www.decalage.info/contact>`_ if you test these tools on
+malware samples to tell me if it works or not.
 
 See http://www.decalage.info/python/balbuzard for more info.
 
@@ -23,7 +45,8 @@ News
 
 Follow all updates and news on Twitter: https://twitter.com/decalage2
 
--  2013-12-04 v0.14: Initial release of Balbuzard and bbcrack
+-  2014-02-20 v0.17: Initial release of Balbuzard tools
+-  2013-03-15: added harvest mode (bbharvest)
 -  2011-05-06: added bruteforce functions (bbcrack)
 -  2008-06-06: first public release as rescan for SSTIC08
 -  2007-07-11: first versions of rescan
@@ -37,12 +60,160 @@ Bitbucket <https://bitbucket.org/decalage/balbuzard/downloads>`_.
 
 --------------
 
+5 Minutes Demo
+--------------
+
+Open a shell or a cmd.exe, go to the directory where you unzipped
+balbuzard. First, let's try balbuzard:
+
+::
+
+    balbuzard.py samples/sample1.doc
+
+Output:
+
+::
+
+    at 00007040: IPv4 address - '12.34.56.78'
+    at 000034CB: URL (http/https/ftp) - 'http://schemas.openxmlf...g/drawingml/2006/main"'
+    at 0000704C: URL (http/https/ftp) - 'http://www.ccserver.com\x00'
+    at 00007064: e-mail address - 'target@acme.com'
+    at 00006C00: EXE MZ followed by PE - "MZ\x90\x00\x03\x00\x00\...\x00\x00\x00PE\x00\x00"
+    at 00006C4E: EXE PE DOS message - 'This program cannot be run in DOS mode'
+    at 00006FD8: Executable filename - 'KERNEL32.dll'
+    at 00006FF4: Executable filename - 'USER32.dll'
+    at 00007030: Executable filename - 'ADVAPI32.dll'
+    at 00007057: Executable filename - 'ccserver.com'
+    at 0000706B: Executable filename - 'acme.com'
+    at 00007074: Executable filename - 'payload.dll'
+    at 00006DC0: EXE: section name - '.text'
+    at 00006E10: EXE: section name - '.data'
+    at 00006DE8: EXE: section name - '.rdata'
+    at 00006FBA: EXE: interesting Win32 function names - 'IsDebuggerPresent'
+    at 00007010: EXE: interesting Win32 function names - 'RegSetValue'
+    at 000070F7: Interesting registry keys - 'CurrentVersion\\Run'
+    at 00000000: Possible OLE2 header (e.g. MS Office documents) - '\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+
+Obviously this is a MS Office document (magic at offset 0000),
+containing a MS Windows executable file located at offset 6C00.
+Balbuzard detects a number of interesting strings:
+
+-  an IP address: '12.34.56.78'
+-  a URL: http://www.ccserver.com
+-  an e-mail address: target@acme.com
+-  an executable filename: payload.dll
+-  a function to detect a debugger: 'IsDebuggerPresent'
+-  a function to write a registry value: 'RegSetValue'
+-  a registry key name used by malware to run at startup:
+   'CurrentVersion\\Run'
+
+All this information may be very useful when analyzing this file further
+with other tools (sandbox, debugger, disassembler, etc).
+
+Let's try balbuzard on a second sample:
+
+::
+
+    balbuzard.py samples/sample2.doc
+
+This time, balbuzard only sees a MS Office document, but nothing else.
+However, when looking at the file with a hex viewer, there is an area at
+the end which looks suspicious. Let's use bbcrack to check if a known
+obfuscation algorithm has been used to hide data:
+
+::
+
+    bbcrack.py -l 1 samples/sample2.doc
+
+Output:
+
+::
+
+    STAGE 1: quickly counting simple patterns for all transforms
+    Best score so far: identity, stage 1 score=977315
+    Best score so far: xor67_rol3, stage 1 score=1420985
+    Checked 5873 transforms in 11.608649 seconds - 505.915900 transforms/s
+
+    TOP 20 SCORES stage 1:
+              xor67_rol3: 1420985
+                identity: 977315
+                   xor20: 867215
+              xor63_rol3: 500885
+    [...]
+    HIGHEST SCORES (>0):
+    xor67_rol3: score 633404
+    saving to file samples/sample2_xor67_rol3.doc
+    identity: score 330686
+    saving to file samples/sample2_identity.doc
+    rol6_add57: score 18086
+    saving to file samples/sample2_rol6_add57.doc
+    [...]
+
+bbcrack runs all known transforms (XOR, ROL, ADD and many combinations)
+with all their possible keys. Then a score is computed for each, based
+on the patterns of interest found in the transformed file. By default,
+the ten best scores are written to disk.
+
+Here if we check the best score obtained with "xor67\_rol3" in a hex
+viewer or with balbuzard, it turns out to be an executable file that was
+hidden within the document, obfuscated with a XOR+ROL algorithm:
+
+::
+
+    balbuzard.py samples/sample2_xor67_rol3.doc
+
+    at 00006F30: IPv4 address - '12.34.56.78'
+    at 00006F3C: URL (http/https/ftp) - 'http://www.ccserver.com\x00'
+    at 00006F54: e-mail address - 'target@acme.com'
+    at 00006C00: EXE MZ followed by PE - "MZ\x90\x00\x03\x00\x00\...\x00\x00\x00PE\x00\x00"
+    at 00006C4E: EXE PE DOS message - 'This program cannot be run in DOS mode'
+    [...]
+    at 00006EEE: EXE: interesting Win32 function names - 'IsDebuggerPresent'
+
+Now, let's check the third sample:
+
+::
+
+    balbuzard.py samples/sample3.exe
+
+    at 00000000: EXE MZ followed by PE - 'MZ\x90\x00\x03\x00\x00\...\x00\x00\x00PE\x00\x00'
+    at 0000004E: EXE PE DOS message - 'This program cannot be run in DOS mode'
+
+This is an executable file, but there is no interesting string in clear
+text. If we run bbcrack, there is no useful result either. However, we
+know this small file is suspicious, and there seem to be obfuscated
+strings in it. Let's try bbharvest to look for obfuscated patterns of
+interest:
+
+::
+
+    bbharvest.py samples/sample3.exe
+
+    *** WARNING: harvest mode may return a lot of false positives!
+    identity: at 00000000 EXE MZ followed by PE, string='MZ\x90\x00\x03\x00\x00\...\x00\x00\x00PE\x00\x00'
+    identity: at 0000004E EXE PE DOS message, string='This program cannot be run in DOS mode'
+    [...]
+    xor11: at 000002F0 e-mail address, string='target@acme.nl'
+    xor88_rol5: at 000002D0 IPv4 address, string='173.194.67.99'
+    rol3_addD6: at 000002E0 IPv4 address, string='74.125.136.94'
+
+This time, bbharvest found three strings obfuscated with different
+transforms and keys:
+
+-  an e-mail address obfuscated with XOR 11
+-  two IP addresses obfuscated with XOR 88 + ROL 5, and ROL 3 + ADD D6
+
+This is the end of this short demo. The next sections explain how to use
+the tools with more details and other examples.
+
+--------------
+
 balbuzard:
 ----------
 
 balbuzard is a malware analysis tool to extract patterns of interest
-from malicious files, such as IP addresses, URLs and common file
-headers.
+from malicious files, such as IP addresses, URLs, typical EXE strings
+and common file headers.
 
 The idea is simple: When I need to analyse a malicious/suspicious file,
 the first thing I do is to open it into a hex viewer, to see which type
@@ -64,14 +235,20 @@ Features
 ~~~~~~~~
 
 -  search for string or regular expression patterns
--  default set of patterns for malware analysis
+-  default set of patterns for malware analysis: IP addresses, e-mail
+   addresses, URLs, typical EXE strings, common file headers, various
+   malware strings
+-  optional use of the Yara engine and Yara rules as patterns
 -  includes Yara signatures from the `Malware Analyst's
    Cookbook <https://code.google.com/p/malwarecookbook>`_ (capabilities,
-   packer and magic)
+   packer and magic),
+   `signsrch <http://aluigi.altervista.org/mytoolz.htm#signsrch>`_/`clamsrch <http://code.google.com/p/clamsrch/>`_
+   (standard encryption constants) and `AlienVault
+   Labs <https://github.com/AlienVault-Labs/AlienVaultLabs>`_ (malware
+   signatures such as APT1).
 -  easily extensible with new patterns in python scripts and Yara rules
--  optional use of the Yara engine and Yara rules as patterns
 -  CSV output
--  batch analysis of multiple files/folders
+-  batch analysis of multiple files/folders on disk or within zips
 -  command-line tool or python module
 -  can open malware in password-protected zip files without writing to
    disk
@@ -81,6 +258,7 @@ Coming soon:
 
 -  XML and HTML outputs
 -  Unicode support
+-  Python 3.x support
 
 How does it work?
 ~~~~~~~~~~~~~~~~~
@@ -110,11 +288,79 @@ Usage
       -h, --help            show this help message and exit
       -c CSV, --csv=CSV     export results to a CSV file
       -v                    verbose display, with hex view.
+      -r                    find files recursively in subdirectories.
       -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
                             if the file is a zip archive, open first file from it,
-                            using the provided password (requires Python 2.6+)  
+                            using the provided password (requires Python 2.6+)
+      -f ZIP_FNAME, --zipfname=ZIP_FNAME
+                            if the file is a zip archive, file(s) to be opened
+                            within the zip. Wildcards * and ? are supported.
+                            (default:*)
 
-Example:
+How to select input files
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can specify one or several files to be analyzed:
+
+::
+
+    balbuzard.py sample1.doc sample2.doc sample3.exe
+
+Using wildcards, it is possible to scan several files in a folder:
+
+::
+
+    balbuzard.py samples/*.bin
+
+With the -r option, the search is recursive in all subfolders:
+
+::
+
+    balbuzard.py malwarezoo/*.exe -r
+
+When scanning several files at once, it is recommended to use the CSV
+output (see below).
+
+As many malware samples are stored in password-protected zip files,
+balbuzard is able to extract such files in memory to analyze them
+without writing to disk. This avoids being blocked by an antivirus. Use
+the option -z to specify the zip password:
+
+::
+
+    balbuzard.py -z infected malwarezoo/sample123.zip
+
+By default, all files in the zip archive are extracted and analyzed. You
+may use the option -f to select files within the zip archive. Wildcards
+are supported, and the search is recursive:
+
+::
+
+    balbuzard.py -z infected malwarezoo/sample123.zip -f sample1.exe
+
+For example, if you wanted to analyze all the `APT1
+samples <http://contagiodump.blogspot.nl/2013/03/mandiant-apt1-samples-categorized-by.html>`_
+available on the Contagio website, you could run this command:
+
+::
+
+    balbuzard.py -z *** APT1_MALWARE_FAMILIES_samples.zip -f *sample*
+
+CSV output
+~~~~~~~~~~
+
+With the -c option, results can be written in a CSV file, suitable for
+further analysis:
+
+::
+
+    balbuzard.py samples\*.bin -c results.csv
+
+Verbose output
+~~~~~~~~~~~~~~
+
+With the -v option, each matched string is displayed with a hexadecimal
+dump:
 
 ::
 
@@ -144,19 +390,6 @@ Example:
     02A0   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
     02B0   54 69 6E 79 20 45 58 45 00 00 00 00 54 68 69 73    Tiny EXE....This
 
-Using wildcards, it is also possible to scan several files in a folder:
-
-::
-
-    >balbuzard.py samples\*.bin
-
-With the -c option, results can be written in a CSV file, suitable for
-further analysis:
-
-::
-
-    >balbuzard.py samples\*.bin -c results.csv
-
 How to extend the list of patterns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -183,6 +416,13 @@ is installed, you may also use Yara rules as patterns for Balbuzard. For
 this, simply copy Yara rules as .yara files in the plugins directory.
 See capabilities.yara as an example.
 
+To disable a plugin (python or yara), you can simply rename the file
+with an extension such as ".disabled".
+
+If you develop useful plugin scripts and you would like me to reference
+them, or if you think about additional transforms that bbcrack should
+include, please `contact me <http://www.decalage.info/contact>`_.
+
 What are the differences with Yara?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -203,9 +443,10 @@ Yara rules, and I plan to use the Yara engine as an option in the near
 future. It is already possible to use Yara rules to extend Balbuzard
 patterns.
 
-Back in 2007-2008 when I started developing this tool Yara was not yet
-published. And since then, I kept it like this because I prefer to have
-a lightweight pure python script in most cases.
+Back in 2007-2008 when I started developing this tool as rescan, Yara
+was not yet published. And since then, I kept it like this because I
+preferred to have a lightweight pure python script to develop other
+tools without requiring the installation of Yara.
 
 Other similar tools
 ~~~~~~~~~~~~~~~~~~~
@@ -221,13 +462,13 @@ patterns within files:
 bbcrack:
 --------
 
-bbcrack (Balbucrack) is a tool to crack malware obfuscation such as XOR,
-ROL, ADD (and many combinations), by bruteforcing all possible keys and
-and checking for specific patterns (IP addresses, domain names, URLs,
-known file headers and strings, etc) using the Balbuzard engine. The
-main difference with similar tools is that it supports a large number of
-transforms and it uses a specific algorithm based on patterns of
-interest.
+bbcrack (Balbucrack) is a tool to crack typical malware obfuscation such
+as XOR, ROL, ADD (and many combinations), by bruteforcing all possible
+keys and and checking for specific patterns (IP addresses, domain names,
+URLs, known file headers and strings, etc) using the Balbuzard engine.
+The main difference with similar tools is that it supports a large
+number of transforms, extensible with python scripts, and it uses a
+specific algorithm based on patterns of interest.
 
 Features
 ~~~~~~~~
@@ -235,8 +476,8 @@ Features
 -  provided with a large number of obfuscation transforms such as XOR,
    ROL, ADD (including combined transforms)
 -  supports fast character-based transforms, or any file transform
--  "harvest mode" for malware with multiple obfuscations/keys
--  string or regular expression patterns
+-  string or regular expression patterns (balbuzard engine)
+-  transforms easily extensible by python scripts
 -  options to select which transforms to check
 -  can open malware in password-protected zip files without writing to
    disk
@@ -244,10 +485,11 @@ Features
 
 Coming soon:
 
--  patterns and transforms easily extensible by python scripts
+-  patterns easily extensible by python scripts
 -  optional use of the Yara engine and Yara rules as patterns
 -  CSV and HTML outputs
 -  batch analysis of multiple files/folders
+-  Python 3.x support
 
 How does it work?
 ~~~~~~~~~~~~~~~~~
@@ -291,19 +533,89 @@ Usage
     Options:
       -h, --help            show this help message and exit
       -l LEVEL, --level=LEVEL
-                            select transforms level 1, 2 or 3
+                            select transforms with level 1, 2 or 3 and below
+      -i INCLEVEL, --inclevel=INCLEVEL
+                            select transforms only with level 1, 2 or 3
+                            (incremental)
       -k KEEP, --keep=KEEP  number of transforms to keep after stage 1
       -s SAVE, --save=SAVE  number of transforms to save to files after stage 2
       -t TRANSFORM, --transform=TRANSFORM
                             only check specific transforms (comma separated list,
                             or "-t list" to display all available transforms)
-      -m                    harvest mode: will apply all transforms and extract
-                            patterns of interest. Slow, but useful when a file
-                            uses multiple transforms.
       -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
                             if the file is a zip archive, open first file from it,
                             using the provided password (requires Python 2.6+)
       -p                    profiling: measure time spent on each pattern.
+
+How to select input files
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+See balbuzard
+
+How to select transforms
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Transforms are organized in three levels (1,2,3): Level 1 are the
+simplest/fastest transforms (such as XOR), level 2 are more complex
+transforms (such as XOR+ADD), and level 3 are less frequent or slower
+transforms. See below for the full list.
+
+**Level 1:**
+
+-  identity: Identity Transformation, no change to data. Parameters:
+   none.
+-  xor: XOR with 8 bits static key A. Parameters: A (1-FF).
+-  add: ADD with 8 bits static key A. Parameters: A (1-FF).
+-  rol: ROL - rotate A bits left. Parameters: A (1-7).
+-  xor\_rol: XOR with static 8 bits key A, then rotate B bits left.
+   Parameters: A (1-FF), B (1-7).
+-  add\_rol: ADD with static 8 bits key A, then rotate B bits left.
+   Parameters: A (1-FF), B (1-7).
+-  rol\_add: rotate A bits left, then ADD with static 8 bits key B.
+   Parameters: A (1-7), B (1-FF).
+
+**Level 2:**
+
+-  xor\_add: XOR with 8 bits static key A, then ADD with 8 bits static
+   key B. Parameters: A (1-FF), B (1-FF).
+-  add\_xor: ADD with 8 bits static key A, then XOR with 8 bits static
+   key B. Parameters: A (1-FF), B (1-FF).
+-  xor\_inc: XOR with 8 bits key A incrementing after each character.
+   Parameters: A (0-FF).
+-  xor\_dec: XOR with 8 bits key A decrementing after each character.
+   Parameters: A (0-FF).
+-  sub\_inc: SUB with 8 bits key A incrementing after each character.
+   Parameters: A (0-FF).
+-  xor\_chained: XOR with 8 bits key A chained with previous character.
+   Parameters: A (1-FF).
+-  xor\_rchained: XOR with 8 bits key A chained with next character
+   (Reverse order from end to start). Parameters: A (1-FF).
+
+**Level 3:**
+
+-  xor\_inc\_rol: XOR with 8 bits key A incrementing after each
+   character, then rotate B bits left. Parameters: A (0-FF), B (1-7).
+-  xor\_rchained\_all: XOR Transform, chained from the right with all
+   following cha racters. Only works well with bbharvest.
+
+**Options -l and -i**:
+
+With the option -l, all the transforms up to the specified level are
+selected. The following command will check transforms of all levels 1, 2
+and 3 at once:
+
+::
+
+    bbcrack.py -l 3 sample.exe
+
+With the option -i, only the specified level is selected. This is useful
+if you try first level 1 for a quick check, then levels 2 or 3 without
+running level 1 again.
+
+::
+
+    bbcrack.py -i 1 sample.exe
+    bbcrack.py -i 2 sample.exe
 
 A real-life example:
 ~~~~~~~~~~~~~~~~~~~~
@@ -336,63 +648,6 @@ A real-life example:
 -  open the file payload\_xor00\_inc\_rol5.bin in a hex viewer: it
    should be a malicious executable file in cleartext.
 
-Harvest mode
-~~~~~~~~~~~~
-
-While bbcrack is great for malware obfuscated with a single transform
-and a single key, it might not be effective on malware using several
-transforms and/or several keys to obfuscate different parts or strings
-in a single file. For example a malware may use a different XOR key for
-each string.
-
-The harvest mode is designed to address this case, by trying all
-transforms and all keys, extracting specific patterns of interest that
-can be found. This way, even if a URL or an IP address is obfuscated
-with a transform and key used only once, it should be reported in this
-mode.
-
-However, this mode may return a lot of false positives. It is therefore
-necessary to analyze the results manually in order to extract meaningful
-data.
-
-It is recommended to add option "-l 1" in order to limit the search to
-level 1 transforms
-
-Here is an example, using a sample file containing random bytes and
-several patterns obfuscated with various transforms:
-
-::
-
-    >bbcrack.py -m -l 1 sample_multiple_transforms.bin
-
-    Opening file sample_multiple_transforms.bin
-    *** WARNING: harvest mode may return a lot of false positives!
-    xor_BE: EXE MZ followed by PE at index C29, string='MZ\x90\x00\x03\x00\x00\x00\x
-    04\x00\x00\x00\xff\xff\x00\x00\xb8\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\
-    x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\
-    x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x0e\x1f\xba\x0e\x00\
-    xb4\t\xcd!\xb8\x01L\xcd!This program cannot be run in DOS mode.\r\r\n$\x00\x00\x
-    00\x00\x00\x00\x009$7\xdd}EY\x8e}EY\x8e}EY\x8eZ\x83"\x8e~EY\x8e}EX\x8e|EY\x8et=\
-    xda\x8e|EY\x8et=\xc8\x8e|EY\x8eRich}EY\x8e\x00\x00\x00\x00\x00\x00\x00\x00PE\x00
-    \x00'
-    xor_BE: Executable filename at index EBF, string='USER32.dll'
-    xor_BE: EXE: section name at index DE1, string='.text'
-    xor_BE: EXE: section name at index E31, string='.data'
-    xor_BE: EXE: section name at index E09, string='.rdata'
-    xor84_rol3: Executable filename at index 15B, string='k.Js'
-    xor88_rol5: IP address at index 400, string='198.168.17.42'
-    xorDB_rol2: e-mail address at index 5B9, string='o@9j.Ky'
-    rol3_addD6: URL (http/https/ftp) at index 80E, string='http://www.mybotnet.com/cc\x00'
-    rol3_addD6: Executable filename at index 819, string='mybotnet.com'
-
-In this example it appears that the file contains an embedded executable
-file obfuscated with XOR 0xBE, an IP address with XOR 88 ROL 5, and a
-URL with ROL 3 ADD D6.
-
-In future version the harvest mode will be moved to a separate tool in
-order to simplify command-line options. Additional filters will also be
-added to reduce the number of false positives.
-
 Tips:
 ~~~~~
 
@@ -400,17 +655,39 @@ Tips:
 -  if you have 5-10 minutes, run bbcrack at level 2, go for a coffee.
 -  if nothing found, run bbcrack at level 3 while you go for lunch or
    during the night.
--  if you found nothing, run bbcrack in harvest mode (option -m) at
-   level 1 or 2, just to check if there are multiple transforms.
--  if you found an executable file, run the harvest mode on the decoded
-   file. Some executables have strings hidden by multiple transforms, so
-   they would be missed by bbcrack in normal mode.
+-  if you found nothing, run bbharvest at level 1 or 2, just to check if
+   there are multiple transforms.
+-  if you found an executable file, run bbharvest on the decoded file.
+   Some executables have strings hidden by multiple transforms, so they
+   would be missed by bbcrack in normal mode.
 
 How to extend the list of patterns and transforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Coming soon: it will be possible to add new transforms and new patterns
-using plugin scripts in python, similarly to Balbuzard.
+It is possible to extend bbcrack with your own transforms, using simple
+Python scripts. For this, you need to write a class, inheriting either
+from Transform\_char or Transform\_string:
+
+-  Transform\_char: for transforms that apply to each character/byte
+   independently, not depending on the location of the character.
+   (example: simple XOR)
+-  Transform\_string: for all other transforms, that may apply to
+   several characters at once, or taking into account the location of
+   the character. (example: XOR with increasing key)
+
+Transform plugin scripts must be stored in the plugins subfolder, with a
+name starting with "trans\_". Read the contents of the provided script
+"trans\_sample\_plugin.py" for detailed explanations and sample
+transforms that you can reuse.
+
+All transforms and plugins are shared by bbcrack, bbharvest and bbtrans.
+
+If you develop useful plugin scripts and you would like me to reference
+them, or if you think about additional transforms that bbcrack should
+include, please `contact me <http://www.decalage.info/contact>`_.
+
+Coming soon: it will be possible to add new patterns for bbcrack using
+plugin scripts in python, similarly to balbuzard.
 
 What are the differences with XORSearch, XORStrings, xortool and others?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -439,10 +716,219 @@ or `this presentation <http://bit.ly/15bI47C>`_ from Michael Barr.
 
 --------------
 
+bbharvest:
+----------
+
+bbharvest extracts all patterns of interest found when applying
+transforms such as XOR, ROL, ADD and various combinations, trying all
+possible keys. It is especially useful when several keys or several
+transforms are used in a single file.
+
+Features
+~~~~~~~~
+
+-  uses the balbuzard engine and patterns, and bbcrack transforms
+-  search for string or regular expression patterns
+-  default set of patterns for malware analysis: IP addresses, e-mail
+   addresses, URLs, typical EXE strings, common file headers, various
+   malware strings
+-  provided with a large number of obfuscation transforms such as XOR,
+   ROL, ADD (including combined transforms)
+-  supports fast character-based transforms, or any file transform
+-  transforms easily extensible by python scripts
+-  effective on malware with multiple obfuscations/keys
+-  options to select which transforms to check
+-  CSV output
+-  can open malware in password-protected zip files without writing to
+   disk
+-  pure python 2.x, no dependency or compilation
+
+Coming soon:
+
+-  patterns and transforms easily extensible by python scripts
+-  optional use of the Yara engine and Yara rules as patterns
+-  CSV and HTML outputs
+-  batch analysis of multiple files/folders
+-  Python 3.x support
+
+How does it work?
+~~~~~~~~~~~~~~~~~
+
+While bbcrack is great for malware obfuscated with a single transform
+and a single key, it might not be effective on malware using several
+transforms and/or several keys to obfuscate different parts or strings
+in a single file. For example a malware may use a different XOR key for
+each string. bbcrack may also fail if only specific strings are
+obfuscated, such as IP addresses.
+
+bbharvest is designed to address these cases, by trying all transforms
+and all keys, extracting specific patterns of interest that can be
+found. This way, even if a URL or an IP address is obfuscated with a
+transform and key used only once, it should be reported by bbharvest.
+
+However, bbharvest may return a lot of false positives. It is therefore
+necessary to analyze the results manually in order to extract meaningful
+data.
+
+By default the search is limited to level 1 transforms, for time
+reasons. You may increase the scope using the options -l or -i.
+
+Usage
+~~~~~
+
+::
+
+    Usage: bbharvest.py [options] <filename>
+
+    Options:
+      -h, --help            show this help message and exit
+      -l LEVEL, --level=LEVEL
+                            select transforms level 1, 2 or 3
+      -i INCLEVEL, --inclevel=INCLEVEL
+                            select transforms only with level 1, 2 or 3
+                            (incremental)
+      -c CSV, --csv=CSV     export results to a CSV file
+      -t TRANSFORM, --transform=TRANSFORM
+                            only check specific transforms (comma separated list,
+                            or "-t list" to display all available transforms)
+      -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
+                            if the file is a zip archive, open first file from it,
+                            using the provided password (requires Python 2.6+)
+      -p                    profiling: measure time spent on each pattern.
+
+Here is an example, using a sample file containing random bytes and
+several patterns obfuscated with various transforms:
+
+::
+
+    >bbharvest.py sample_multiple_transforms.bin
+
+    Opening file sample_multiple_transforms.bin
+    *** WARNING: harvest mode may return a lot of false positives!
+    xor_BE: EXE MZ followed by PE at index C29, string='MZ\x90\x00\x03\x00\x00\x00\x
+    04\x00\x00\x00\xff\xff\x00\x00\xb8\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\
+    x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\
+    x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x0e\x1f\xba\x0e\x00\
+    xb4\t\xcd!\xb8\x01L\xcd!This program cannot be run in DOS mode.\r\r\n$\x00\x00\x
+    00\x00\x00\x00\x009$7\xdd}EY\x8e}EY\x8e}EY\x8eZ\x83"\x8e~EY\x8e}EX\x8e|EY\x8et=\
+    xda\x8e|EY\x8et=\xc8\x8e|EY\x8eRich}EY\x8e\x00\x00\x00\x00\x00\x00\x00\x00PE\x00
+    \x00'
+    xor_BE: Executable filename at index EBF, string='USER32.dll'
+    xor_BE: EXE: section name at index DE1, string='.text'
+    xor_BE: EXE: section name at index E31, string='.data'
+    xor_BE: EXE: section name at index E09, string='.rdata'
+    xor84_rol3: Executable filename at index 15B, string='k.Js'
+    xor88_rol5: IP address at index 400, string='198.168.17.42'
+    xorDB_rol2: e-mail address at index 5B9, string='o@9j.Ky'
+    rol3_addD6: URL (http/https/ftp) at index 80E, string='http://www.mybotnet.com/cc\x00'
+    rol3_addD6: Executable filename at index 819, string='mybotnet.com'
+
+In this example it appears that the file contains an embedded executable
+file obfuscated with XOR 0xBE, an IP address with XOR 88 ROL 5, and a
+URL with ROL 3 ADD D6.
+
+See also the 5 minutes demo above.
+
+How to select input files
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+See balbuzard above.
+
+CSV output
+~~~~~~~~~~
+
+Because bbharvest may find a lot of matching strings, often including
+false positives, it is very useful to write all results to a CSV file.
+Then it is easier to use a spreadsheet application to filter the results
+and highlight interesting strings. Example:
+
+::
+
+    bbharvest.py sample.exe -c output.csv
+
+How to select transforms
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+See bbcrack above.
+
+How to extend the list of patterns and transforms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+See bbcrack above. Transforms and plugins are shared between bbcrack,
+bbharvest and bbtrans.
+
+Are there other similar tools?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For now, I haven't come across tools similar to bbharvest. If you find
+one, please `contact me <http://www.decalage.info/contact>`_.
+
+--------------
+
 bbtrans:
 --------
 
-TODO
+bbtrans can apply any of the transforms from bbcrack (XOR, ROL, ADD and
+various combinations) to a file.
+
+Usage
+~~~~~
+
+::
+
+    Usage: bbtrans.py [options] <filename>
+
+    Options:
+      -h, --help            show this help message and exit
+      -t TRANSFORM, --transform=TRANSFORM
+                            transform to be applied (or "-t list" to display all
+                            available transforms)
+      -p PARAMS, --params=PARAMS
+                            parameters for transform (comma separated list)
+      -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
+                            if the file is a zip archive, open first file from it,
+                            using the provided password (requires Python 2.6+)
+
+How to select input files
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+See balbuzard above.
+
+How to select transforms
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the option -t, followed by the transform short name: see bbcrack
+above.
+
+How to specify parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the option -p, followed by one or several parameters corresponding
+to the transform. Parameters must be written in hexadecimal. If there
+are several parameters, use commas to separate them, without space.
+
+Output files will be created with the same name as input files, with the
+short name of the transform including parameters.
+
+Examples:
+
+::
+
+    bbtrans.py sample.exe -t xor -p 4F
+
+This will produce a file named sample\_xor4F.exe.
+
+::
+
+    bbtrans.py sample.exe -t xor_rol -p 4F,3
+
+This will produce a file named sample\_xor4F\_rol3.exe.
+
+How to extend the list of patterns and transforms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+See bbcrack above. Transforms and plugins are shared between bbcrack,
+bbharvest and bbtrans.
 
 --------------
 
@@ -461,11 +947,12 @@ suggest changes.
 License
 -------
 
-This license applies to the Balbuzard package, apart from the thirdparty
-folder which contains third-party files published with their own
+This license applies to the whole Balbuzard package including balbuzard,
+bbcrack, bbharvest and bbtrans, apart from the thirdparty and plugins
+folders which contain third-party files published with their own
 license.
 
-The Balbuzard package is copyright (c) 2007-2013, Philippe Lagadec
+The Balbuzard package is copyright (c) 2007-2014, Philippe Lagadec
 (http://www.decalage.info) All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
