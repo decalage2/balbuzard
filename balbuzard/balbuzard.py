@@ -1,3 +1,4 @@
+#! /usr/bin/env python2
 """
 balbuzard - v0.17 2014-01-23 Philippe Lagadec
 
