@@ -1,3 +1,4 @@
+#! /usr/bin/env python2
 """
 bbharvest - v0.05 2014-01-06 Philippe Lagadec
 

@@ -1,3 +1,4 @@
+#! /usr/bin/env python2
 """
 bbcrack - v0.12 2014-01-28 Philippe Lagadec
 
