@@ -69,13 +69,12 @@ __version__ = '0.12'
 # + patterns for stage 1 and 2 should be more coherent (include stage 1 results)
 # + -e option to encrypt output files with zip password
 # + -f option to select file(s) within zip instead of the 1st one
-# + declare patterns only once in a separate module, use variables to create
-#   groups for stage 1/2
 # + profiling to see which patterns take more time => find which regex hangs
 # + increase default params - k=30 s=5?
 # + two stage regex, or string+regex, multiple strings, stop after 1 match
 # + move main code to functions
 # + test yara engine to see if faster
+# + transform classes: add transform_int method to avoid using ord/chr
 # - merge regex of same weight to improve speed?
 # - try acora for faster multi-string search, or other libraries?
 # - try pyre2 for faster regex search?
@@ -86,10 +85,7 @@ __version__ = '0.12'
 #   OR even just find the 1st occurence?
 # - inverse transform in each transform class? (useful in bbtrans)
 # - option to run balbuzard automatically on best scores
-# - csv output for stage1+2 or harvest mode
-# - for some patterns such as e-mail, would be good to have a validation function
-#   on top of regex to filter out false positives. for example using tldextract
-#   or list of TLDs: http://data.iana.org/TLD/tlds-alpha-by-domain.txt.
+# - csv output for stage1+2
 # - optimize patterns with strings + case-insensitive (with lower())
 # - Transforms: class method or attribute to return total number of params, to
 #   be able to display progression as % or ETA.
