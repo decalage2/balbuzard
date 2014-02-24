@@ -13,9 +13,10 @@ open-source python tools for malware analysis:
    various combinations, in order to guess which algorithms/keys have
    been used.
 -  **bbharvest** extracts all patterns of interest found when applying
-   transforms such as XOR, ROL, ADD and various combinations, trying all
-   possible keys. It is especially useful when several keys or several
-   transforms are used in a single file.
+   typical malware obfuscation transforms such as XOR, ROL, ADD and
+   various combinations, trying all possible keys. It is especially
+   useful when several keys or several transforms are used in a single
+   file.
 -  **bbtrans** can apply any of the transforms from bbcrack (XOR, ROL,
    ADD and various combinations) to a file.
 
@@ -45,7 +46,7 @@ News
 
 Follow all updates and news on Twitter: https://twitter.com/decalage2
 
--  2014-02-20 v0.17: Initial release of Balbuzard tools
+-  2014-02-24 v0.17: Initial release of Balbuzard tools
 -  2013-03-15: added harvest mode (bbharvest)
 -  2011-05-06: added bruteforce functions (bbcrack)
 -  2008-06-06: first public release as rescan for SSTIC08
