@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-balbuzard - v0.17 2014-01-23 Philippe Lagadec
+balbuzard - v0.18 2014-02-24 Philippe Lagadec
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
@@ -34,7 +34,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = '0.17'
+__version__ = '0.18'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -74,6 +74,7 @@ __version__ = '0.17'
 #                      - new option -r to find files recursively in subdirs
 #                      - new option -f to find files within zips with wildcards
 # 2014-01-23 v0.17 PL: - Pattern: added partial support for filter function
+# 2014-02-24 v0.18 PL: - fixed bug with main_dir when balbuzard is imported
 
 
 #------------------------------------------------------------------------------
@@ -509,32 +510,6 @@ def ziglob (zipfileobj, pathname):
         yield f
 
 
-def main_is_frozen():
-    """
-    To determine whether the script is launched from the interpreter or if it
-    is an executable compiled with py2exe.
-    See http://www.py2exe.org/index.cgi/HowToDetermineIfRunningFromExe
-    """
-    return (hasattr(sys, "frozen") # new py2exe
-        or hasattr(sys, "importers") # old py2exe
-        or imp.is_frozen("__main__")) # tools/freeze
-
-
-def get_main_dir():
-    """
-    To determine the directory where the main script is located.
-    Works if it is launched from the interpreter or if it is an executable
-    compiled with py2exe.
-    See http://www.py2exe.org/index.cgi/HowToDetermineIfRunningFromExe
-    """
-    if main_is_frozen():
-        # script compiled with py2exe:
-        return os.path.dirname(os.path.abspath(sys.executable))
-    else:
-        # else the script is sys.argv[0]
-        return os.path.dirname(os.path.abspath(sys.argv[0]))
-
-
 def iter_files(files, recursive=False, zip_password=None, zip_fname='*'):
     """
     Open each file provided as argument:
@@ -568,15 +543,23 @@ def iter_files(files, recursive=False, zip_password=None, zip_fname='*'):
                 yield filename, data
 
 
-#=== MAIN =====================================================================
+def relpath(path, start='.'):
+    """
+    convert a path to a relative path, using os.path.relpath on Python 2.6+
+    On Python 2.5 or older, the path is not changed, but no exception is raised.
+    (this function is just for backward compatibility)
+    """
+    # with python 2.6+, make it a relative path:
+    try:
+        return os.path.relpath(path, start)
+    except:
+        return path
+
+
+#=== INITALIZATION ============================================================
 
 # get main directory where this script is located:
-main_dir = get_main_dir()
-# with python 2.6+, make it a relative path:
-try:
-    main_dir = os.path.relpath(main_dir)
-except:
-    pass
+main_dir = os.path.dirname(__file__)
 #print 'main dir:', main_dir
 plugins_dir = os.path.join(main_dir, 'plugins')
 #print 'plugins dir:', plugins_dir
@@ -585,6 +568,7 @@ plugins_dir = os.path.join(main_dir, 'plugins')
 patfile = os.path.join(main_dir, 'patterns.py')
 # save __doc__, else it seems to be overwritten:
 d = __doc__
+#print 'patfile:', patfile
 execfile(patfile)
 __doc__ = d
 del d
@@ -620,14 +604,14 @@ if __name__ == '__main__':
 
     # load plugins
     for f in rglob(plugins_dir, 'bbz*.py'): # glob.iglob('plugins/bbz*.py'):
-        print 'Loading plugin from', f
+        print 'Loading plugin from', relpath(f, plugins_dir)
         execfile(f)
 
     # load yara plugins
     if YARA:
         yara_rules = []
         for f in rglob(plugins_dir, '*.yara'):  #glob.iglob('plugins/*.yara'):  # or bbz*.yara?
-            print 'Loading yara plugin from', f
+            print 'Loading yara plugin from', relpath(f, plugins_dir)
             yara_rules.append(yara.compile(f))
 
     # open CSV file

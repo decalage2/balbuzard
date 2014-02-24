@@ -39,8 +39,6 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.07'
-
 #------------------------------------------------------------------------------
 # CHANGELOG:
 # 2013-12-03 v0.01 PL: - 1st version, moved patterns from balbuzard
