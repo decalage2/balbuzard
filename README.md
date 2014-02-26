@@ -25,7 +25,7 @@ News
 
 Follow all updates and news on Twitter: <https://twitter.com/decalage2>
 
-- 2014-02-24 v0.17: Initial release of Balbuzard tools
+- 2014-02-26 v0.18: Initial release of Balbuzard tools
 - 2013-03-15: added harvest mode (bbharvest)
 - 2011-05-06: added bruteforce functions (bbcrack)
 - 2008-06-06: first public release as rescan for SSTIC08

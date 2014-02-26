@@ -472,7 +472,7 @@ def str_find_all(a_str, sub):
 # inspired by http://stackoverflow.com/questions/14798220/how-can-i-search-sub-folders-using-glob-glob-module-in-python
 def rglob (path, pattern='*.*'):
     """
-    Recusrive glob:
+    Recursive glob:
     similar to glob.glob, but finds files recursively in all subfolders of path.
     path: root directory where to search files
     pattern: pattern for filenames, using wildcards, e.g. *.txt
