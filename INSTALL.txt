@@ -1,0 +1,8 @@
+To install this package:
+
+
+On Windows, double-click on install.bat.
+
+On all platforms, open a shell and run:
+python setup.py install
+
