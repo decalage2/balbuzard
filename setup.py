@@ -36,7 +36,7 @@ from balbuzard.balbuzard import __version__
 
 name         = "balbuzard"
 version      = __version__
-desc         = "Malware analysis tools to extract patterns of interest and bruteforce XOR/ADD/etc obfuscation"
+desc         = "Malware analysis tools to extract patterns of interest from files and crack obfuscation such as XOR"
 long_desc    = open('balbuzard/README.txt').read()
 
 author       = "Philippe Lagadec"
