@@ -1,7 +1,11 @@
 Balbuzard
 =========
 
-[Balbuzard](http://www.decalage.info/python/balbuzard) is a package of open-source python tools for malware analysis: 
+[Balbuzard](http://www.decalage.info/python/balbuzard) is a package of malware analysis tools in python to extract patterns of interest from suspicious files (IP addresses, domain names, known file headers, interesting strings, etc). It can also crack malware obfuscation such as XOR, ROL, etc by bruteforcing and checking for those patterns.
+
+Quick links: [Download](http://bitbucket.org/decalage/balbuzard/downloads) - [Documentation](https://bitbucket.org/decalage/balbuzard) - [Contact](http://www.decalage.info/contact) - [Report issues](https://bitbucket.org/decalage/balbuzard/issues?status=new&status=open) - [Updates on Twitter](https://twitter.com/decalage2)
+
+Balbuzard tools:
 
 - **balbuzard** is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs, embedded files and typical malware strings. It is easily extensible with new  patterns, regular expressions and Yara rules.
 - **bbcrack** uses a new algorithm based on patterns of interest to bruteforce typical malware obfuscation such as XOR, ROL, ADD and various combinations, in order to guess which algorithms/keys have been used. 
@@ -16,7 +20,7 @@ When to use these tools:
 
 Important note: while balbuzard and bbharvest are straightforward and readily usable, bbcrack is still an experimental tool and it has not been tested on many samples yet. Please [contact me](http://www.decalage.info/contact) if you test these tools on malware samples to tell me if it works or not.
 
-See <http://www.decalage.info/python/balbuzard> for more info.
+See <http://www.decalage.info/python/balbuzard> for more info and other tools.
 
 ----------------------------------------------------------------------------------
 
@@ -28,8 +32,8 @@ Follow all updates and news on Twitter: <https://twitter.com/decalage2>
 - 2014-02-26 v0.18: Initial release of Balbuzard tools
 - 2013-03-15: added harvest mode (bbharvest)
 - 2011-05-06: added bruteforce functions (bbcrack)
-- 2008-06-06: first public release as rescan for SSTIC08
-- 2007-07-11: first versions of rescan
+- 2008-06-06: first public release as [reScan](http://decalage.info/rescan) for [SSTIC08](http://decalage.info/sstic08)
+- 2007-07-11: first versions of reScan
 - see changelog in source code for more info.
 
 
