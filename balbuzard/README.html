@@ -1,5 +1,7 @@
 <h1 id="balbuzard">Balbuzard</h1>
-<p><a href="http://www.decalage.info/python/balbuzard">Balbuzard</a> is a package of open-source python tools for malware analysis:</p>
+<p><a href="http://www.decalage.info/python/balbuzard">Balbuzard</a> is a package of malware analysis tools in python to extract patterns of interest from suspicious files (IP addresses, domain names, known file headers, interesting strings, etc). It can also crack malware obfuscation such as XOR, ROL, etc by bruteforcing and checking for those patterns.</p>
+<p>Quick links: <a href="http://bitbucket.org/decalage/balbuzard/downloads">Download</a> - <a href="https://bitbucket.org/decalage/balbuzard">Documentation</a> - <a href="http://www.decalage.info/contact">Contact</a> - <a href="https://bitbucket.org/decalage/balbuzard/issues?status=new&amp;status=open">Report issues</a> - <a href="https://twitter.com/decalage2">Updates on Twitter</a></p>
+<p>Balbuzard tools:</p>
 <ul>
 <li><strong>balbuzard</strong> is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs, embedded files and typical malware strings. It is easily extensible with new patterns, regular expressions and Yara rules.</li>
 <li><strong>bbcrack</strong> uses a new algorithm based on patterns of interest to bruteforce typical malware obfuscation such as XOR, ROL, ADD and various combinations, in order to guess which algorithms/keys have been used.</li>
@@ -13,7 +15,7 @@
 <li>Alternatively, if bbcrack is not successful, or if you think the file may use several algorithms and/or keys, try bbharvest.</li>
 </ul>
 <p>Important note: while balbuzard and bbharvest are straightforward and readily usable, bbcrack is still an experimental tool and it has not been tested on many samples yet. Please <a href="http://www.decalage.info/contact">contact me</a> if you test these tools on malware samples to tell me if it works or not.</p>
-<p>See <a href="http://www.decalage.info/python/balbuzard"><code class="url">http://www.decalage.info/python/balbuzard</code></a> for more info.</p>
+<p>See <a href="http://www.decalage.info/python/balbuzard"><code class="url">http://www.decalage.info/python/balbuzard</code></a> for more info and other tools.</p>
 <hr />
 <h2 id="news">News</h2>
 <p>Follow all updates and news on Twitter: <a href="https://twitter.com/decalage2"><code class="url">https://twitter.com/decalage2</code></a></p>
@@ -21,8 +23,8 @@
 <li>2014-02-26 v0.18: Initial release of Balbuzard tools</li>
 <li>2013-03-15: added harvest mode (bbharvest)</li>
 <li>2011-05-06: added bruteforce functions (bbcrack)</li>
-<li>2008-06-06: first public release as rescan for SSTIC08</li>
-<li>2007-07-11: first versions of rescan</li>
+<li>2008-06-06: first public release as <a href="http://decalage.info/rescan">reScan</a> for <a href="http://decalage.info/sstic08">SSTIC08</a></li>
+<li>2007-07-11: first versions of reScan</li>
 <li>see changelog in source code for more info.</li>
 </ul>
 <h2 id="download">Download:</h2>
