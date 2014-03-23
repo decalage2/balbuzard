@@ -1,5 +1,9 @@
 To install this package:
 
+see https://bitbucket.org/decalage/balbuzard/wiki/Installation or the file 
+Installation.html in the balbuzard/doc subfolder.
+
+
 1) If you plan to use these scripts as command line tools:
 
 Just unzip the archive in any folder, and run the scripts from that folder.
