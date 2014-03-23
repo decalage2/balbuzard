@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<h1 id="bbcrack">bbcrack:</h1>
+<p>bbcrack (Balbucrack) is a tool to crack typical malware obfuscation such as XOR, ROL, ADD (and many combinations), by bruteforcing all possible keys and and checking for specific patterns (IP addresses, domain names, URLs, known file headers and strings, etc) using the <a href="balbuzard.html">balbuzard</a> engine. The main difference with similar tools is that it supports a large number of transforms, extensible with python scripts, and it uses a specific algorithm based on patterns of interest. bbcrack is part of the <a href="http://www.decalage.info/python/balbuzard">Balbuzard</a> tools.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>provided with a large number of obfuscation transforms such as XOR, ROL, ADD (including combined transforms)</li>
+<li>supports fast character-based transforms, or any file transform</li>
+<li>string or regular expression patterns (balbuzard engine)</li>
+<li>transforms easily extensible by python scripts</li>
+<li>options to select which transforms to check</li>
+<li>can open malware in password-protected zip files without writing to disk</li>
+<li>pure python 2.x, no dependency or compilation</li>
+</ul>
+<p>Coming soon:</p>
+<ul>
+<li>patterns easily extensible by python scripts</li>
+<li>optional use of the Yara engine and Yara rules as patterns</li>
+<li>CSV and HTML outputs</li>
+<li>batch analysis of multiple files/folders</li>
+<li>Python 3.x support</li>
+</ul>
+<h2 id="how-does-it-work">How does it work?</h2>
+<p>bbcrack contains a number of <strong>obfuscation transforms</strong> that can be applied to data. Each transform may have one or several parameters. For example, the XOR transform has a parameter (key) that can vary from 0 to 255. Each byte (B) in data is transformed to B XOR key.</p>
+<p>The current version of bbcrack includes the following transforms among others: XOR, ADD, ROL, XOR+ROL, XOR+ADD, ADD+XOR, XOR with incrementing key, XOR chained, etc. Run &quot;bbcrack.py -t list&quot; to check the full list.</p>
+<p>The goal is to find which transform and which parameters were used to obfuscate the data, if any. When the right transform is found, specific patterns should normally appear in cleartext.</p>
+<p>For performance reasons, bbcrack uses a two-stages algorithm:</p>
+<ul>
+<li><strong>Stage 1</strong>: all selected transforms are applied to data, with all possible parameters. For each transform, a score is computed by looking for simple strings that appear in many malicious files such as null bytes, whitespaces, end of lines, and &quot;This program cannot be run in DOS mode&quot;. The score is based on the length of the matched string and a weight for each pattern. Only the best scores are kept for stage 2.</li>
+<li><strong>Stage 2</strong>: for all selected transforms, a new score is computed by looking for more elaborate patterns using the Balbuzard engine, such as IP addresses, e-mail addresses, executable filenames, CamelCase words, etc. At the end, the best scores are saved to disk for further investigation. If the file was effectively obfuscated using one of those transforms, the content should now appear in cleartext.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<pre><code>Usage: bbcrack.py [options] &lt;filename&gt;
+
+Options:
+  -h, --help            show this help message and exit
+  -l LEVEL, --level=LEVEL
+                        select transforms with level 1, 2 or 3 and below
+  -i INCLEVEL, --inclevel=INCLEVEL
+                        select transforms only with level 1, 2 or 3
+                        (incremental)
+  -k KEEP, --keep=KEEP  number of transforms to keep after stage 1
+  -s SAVE, --save=SAVE  number of transforms to save to files after stage 2
+  -t TRANSFORM, --transform=TRANSFORM
+                        only check specific transforms (comma separated list,
+                        or &quot;-t list&quot; to display all available transforms)
+  -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
+                        if the file is a zip archive, open first file from it,
+                        using the provided password (requires Python 2.6+)
+  -p                    profiling: measure time spent on each pattern.</code></pre>
+<h2 id="how-to-select-input-files">How to select input files</h2>
+<p>See <a href="balbuzard.html">balbuzard</a></p>
+<h2 id="how-to-select-transforms">How to select transforms</h2>
+<p>Transforms are organized in three levels (1,2,3): Level 1 are the simplest/fastest transforms (such as XOR), level 2 are more complex transforms (such as XOR+ADD), and level 3 are less frequent or slower transforms. See below for the full list.</p>
+<h3 id="level-1">Level 1:</h3>
+<ul>
+<li><strong>identity</strong>: Identity Transformation, no change to data. Parameters: none.</li>
+<li><strong>xor</strong>: XOR with 8 bits static key A. Parameters: A (1-FF).</li>
+<li><strong>add</strong>: ADD with 8 bits static key A. Parameters: A (1-FF).</li>
+<li><strong>rol</strong>: ROL - rotate A bits left. Parameters: A (1-7).</li>
+<li><strong>xor_rol</strong>: XOR with static 8 bits key A, then rotate B bits left. Parameters: A (1-FF), B (1-7).</li>
+<li><strong>add_rol</strong>: ADD with static 8 bits key A, then rotate B bits left. Parameters: A (1-FF), B (1-7).</li>
+<li><strong>rol_add</strong>: rotate A bits left, then ADD with static 8 bits key B. Parameters: A (1-7), B (1-FF).</li>
+</ul>
+<h3 id="level-2">Level 2:</h3>
+<ul>
+<li><strong>xor_add</strong>: XOR with 8 bits static key A, then ADD with 8 bits static key B. Parameters: A (1-FF), B (1-FF).</li>
+<li><strong>add_xor</strong>: ADD with 8 bits static key A, then XOR with 8 bits static key B. Parameters: A (1-FF), B (1-FF).</li>
+<li><strong>xor_inc</strong>: XOR with 8 bits key A incrementing after each character. Parameters: A (0-FF).</li>
+<li><strong>xor_dec</strong>: XOR with 8 bits key A decrementing after each character. Parameters: A (0-FF).</li>
+<li><strong>sub_inc</strong>: SUB with 8 bits key A incrementing after each character. Parameters: A (0-FF).</li>
+<li><strong>xor_chained</strong>: XOR with 8 bits key A chained with previous character. Parameters: A (1-FF).</li>
+<li><strong>xor_rchained</strong>: XOR with 8 bits key A chained with next character (Reverse order from end to start). Parameters: A (1-FF).</li>
+</ul>
+<h3 id="level-3">Level 3:</h3>
+<ul>
+<li><strong>xor_inc_rol</strong>: XOR with 8 bits key A incrementing after each character, then rotate B bits left. Parameters: A (0-FF), B (1-7).</li>
+<li><strong>xor_rchained_all</strong>: XOR Transform, chained from the right with all following cha racters. Only works well with bbharvest.</li>
+</ul>
+<h3 id="options--l-and--i">Options -l and -i:</h3>
+<p>With the option -l, all the transforms up to the specified level are selected. The following command will check transforms of all levels 1, 2 and 3 at once:</p>
+<pre><code>bbcrack.py -l 3 sample.exe</code></pre>
+<p>With the option -i, only the specified level is selected. This is useful if you try first level 1 for a quick check, then levels 2 or 3 without running level 1 again.</p>
+<pre><code>bbcrack.py -i 1 sample.exe
+bbcrack.py -i 2 sample.exe</code></pre>
+<h2 id="a-real-life-example">A real-life example:</h2>
+<ul>
+<li>Download <a href="http://contagiodump.blogspot.nl/2010/02/feb-2-cve-2009-4324-rep-mike-castle.html">this sample</a> from Contagio (ask me or Mila for the zip password if you don't know the contagio scheme).</li>
+<li>The sample PDF contains in fact two PDFs (starting with &quot;%PDF&quot;, ending with &quot;%EOF&quot;) and a binary blob in between, which looks obfuscated.</li>
+<li>In you favorite hex editor (e.g. FileInsight, PSPad, UltraEdit, etc), extract the binary blob from offset 1000h to ACC7h (40136 bytes long) to a file named payload.bin.</li>
+</ul>
+<p>Then run:</p>
+<pre><code>bbcrack.py -l 3 payload.bin </code></pre>
+<p>It may take an hour to run. Or if you are in a hurry, you can cheat with:</p>
+<pre><code>bbcrack.py -t xor_inc_rol payload.bin</code></pre>
+<ul>
+<li>In the end, the best score is for the transform xor00_inc_rol5 (XOR with incremental key starting at 0, then ROL 5 bits).</li>
+<li>open the file payload_xor00_inc_rol5.bin in a hex viewer: it should be a malicious executable file in cleartext.</li>
+</ul>
+<h2 id="tips">Tips:</h2>
+<ul>
+<li>if you only have a couple minutes, run a quick bbcrack at level 1.</li>
+<li>if you have 5-10 minutes, run bbcrack at level 2, go for a coffee.</li>
+<li>if nothing found, run bbcrack at level 3 (option -i 3) while you go for lunch or during the night.</li>
+<li>if you found nothing, run <a href="bbharvest.html">bbharvest</a> at level 1 or 2, just to check if there are multiple transforms.</li>
+<li>if you found an executable file, run <a href="bbharvest.html">bbharvest</a> on the decoded file. Some executables have strings hidden by multiple transforms, so they would be missed by bbcrack in normal mode.</li>
+</ul>
+<h2 id="how-to-extend-the-list-of-patterns-and-transforms">How to extend the list of patterns and transforms</h2>
+<p>It is possible to extend bbcrack with your own transforms, using simple Python scripts. For this, you need to write a class, inheriting either from Transform_char or Transform_string:</p>
+<ul>
+<li><strong>Transform_char</strong>: for transforms that apply to each character/byte independently, not depending on the location of the character. (example: simple XOR)</li>
+<li><strong>Transform_string</strong>: for all other transforms, that may apply to several characters at once, or taking into account the location of the character. (example: XOR with increasing key)</li>
+</ul>
+<p>Transform plugin scripts must be stored in the <strong>plugins</strong> subfolder, with a name starting with &quot;trans_&quot;. Read the contents of the provided script &quot;trans_sample_plugin.py&quot; for detailed explanations and sample transforms that you can reuse.</p>
+<p>All transforms and plugins are shared by bbcrack, <a href="bbharvest.html">bbharvest</a> and <a href="bbtrans.html">bbtrans</a>.</p>
+<p>If you develop useful plugin scripts and you would like me to reference them, or if you think about additional transforms that bbcrack should include, please <a href="http://www.decalage.info/contact">contact me</a>.</p>
+<p>Coming soon: it will be possible to add new patterns for bbcrack using plugin scripts in python, similarly to <a href="balbuzard.html">balbuzard</a>.</p>
+<h2 id="how-to-use-the-bbcrack-engine-in-your-python-applications">How to use the bbcrack engine in your python applications</h2>
+<p>TODO</p>
+<h2 id="what-are-the-differences-with-xorsearch-xorstrings-xortool-and-others">What are the differences with XORSearch, XORStrings, xortool and others?</h2>
+<p>For a good introduction to a number of malware deobfuscation tools, see <a href="http://computer-forensics.sans.org/blog/2013/05/14/tools-for-examining-xor-obfuscation-for-malware-analysis">Lenny Zeltser's article</a>, or <a href="http://bit.ly/15bI47C">this presentation</a> from Michael Barr.</p>
+<ul>
+<li><a href="http://blog.didierstevens.com/programs/xorsearch/">XORSearch</a>: C program, looks for one or several strings, ASCII, hex or unicode, supports XOR, ROL, ROT or SHIFT with single one-byte key (no combinations).</li>
+<li><a href="http://blog.didierstevens.com/?s=xorstrings">XORStrings</a>: C program, counts how many strings appear for each transform, supports XOR, ROL or SHIFT with single one-byte key (no combinations).</li>
+<li><a href="http://eternal-todo.com/var/scripts/xorbruteforcer">xorBruteForcer</a>: Python script, tries all 255 one-byte XOR keys, can search for one string.</li>
+<li><a href="http://hooked-on-mnemonics.blogspot.nl/p/iheartxor.html">iheartxor/brutexor</a>: Python script, tries all 255 one-byte XOR keys, can search for one regular expression, by default any string between null bytes.</li>
+<li><a href="https://github.com/hiddenillusion/NoMoreXOR">NoMoreXOR</a>: TODO</li>
+<li><a href="https://github.com/tomchop/unxor/">unxor</a>: TODO</li>
+<li>xortool: TODO</li>
+<li><a href="https://github.com/hiddenillusion/yara-goodies">xortools extended by hiddenillusion</a>: TODO</li>
+<li><a href="http://www.cloudshield.com/blog/advanced-malware/how-to-efficiently-detect-xor-encoded-content-part-1-of-2/">xor_poc</a>: TODO</li>
+</ul>
+<hr />
+<h2 id="documentation-pages">Documentation pages</h2>
+<ul>
+<li><a href="Home.html">Home</a></li>
+<li><a href="Installation.html">Installation</a></li>
+<li><a href="Demo.html">Demo</a></li>
+<li><a href="balbuzard.html">balbuzard</a></li>
+<li><a href="bbcrack.html">bbcrack</a></li>
+<li><a href="bbharvest.html">bbharvest</a></li>
+<li><a href="bbtrans.html">bbtrans</a></li>
+</ul>
+<h2 id="quick-links">Quick links:</h2>
+<ul>
+<li><a href="http://www.decalage.info/python/balbuzard">Balbuzard home page</a></li>
+<li><a href="http://bitbucket.org/decalage/balbuzard/downloads">Download</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/wiki">Documentation</a></li>
+<li><a href="http://www.decalage.info/contact">Contact</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/issues?status=new&amp;status=open">Report issues</a></li>
+<li><a href="https://twitter.com/decalage2">Updates on Twitter</a></li>
+</ul>
+</body>
+</html>

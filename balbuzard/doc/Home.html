@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<h1 id="balbuzard---documentation">Balbuzard - Documentation</h1>
+<p>This is the documentation home page for the Balbuzard tools. The online version is <a href="https://bitbucket.org/decalage/balbuzard/wiki">here</a>, and a copy can be found in the balbuzard/doc subfolder of the package.</p>
+<p><a href="http://www.decalage.info/python/balbuzard">Balbuzard</a> is a package of malware analysis tools in python to extract patterns of interest from suspicious files (IP addresses, domain names, known file headers, interesting strings, etc). It can also crack malware obfuscation such as XOR, ROL, etc by bruteforcing and checking for those patterns.</p>
+<h2 id="balbuzard-tools">Balbuzard tools</h2>
+<ul>
+<li><strong><a href="balbuzard.html">balbuzard</a></strong> is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs, embedded files and typical malware strings. It is easily extensible with new patterns, regular expressions and Yara rules.</li>
+<li><strong><a href="bbcrack.html">bbcrack</a></strong> uses a new algorithm based on patterns of interest to bruteforce typical malware obfuscation such as XOR, ROL, ADD and various combinations, in order to guess which algorithms/keys have been used.</li>
+<li><strong><a href="bbharvest.html">bbharvest</a></strong> extracts all patterns of interest found when applying typical malware obfuscation transforms such as XOR, ROL, ADD and various combinations, trying all possible keys. It is especially useful when several keys or several transforms are used in a single file.</li>
+<li><strong><a href="bbtrans.html">bbtrans</a></strong> can apply any of the transforms from bbcrack (XOR, ROL, ADD and various combinations) to a file.</li>
+</ul>
+<h2 id="when-to-use-these-tools">When to use these tools</h2>
+<ul>
+<li>If you need to analyze a new malicious file, you can first try <strong><a href="balbuzard.html">balbuzard</a></strong> to extract strings/patterns of interest and detect embedded files in cleartext.</li>
+<li>Then if you think the malicious file might use an obfuscation algorithm such as XOR to hide interesting data (e.g. an embedded executable file), try <strong><a href="bbcrack.html">bbcrack</a></strong> to find the algorithm and the key(s).</li>
+<li>Alternatively, if bbcrack is not successful, or if you think the file may use several algorithms and/or keys, try <strong><a href="bbharvest.html">bbharvest</a></strong>. bbharvest is especially targeted at single strings obfuscated within an executable or malicious file.</li>
+</ul>
+<h2 id="minutes-demo">5 minutes demo</h2>
+<p>See the <strong><a href="Demo.html">Demo</a></strong> page to see examples and test the tools by yourself in a few minutes using the provided samples.</p>
+<h2 id="help-wanted">Help wanted:</h2>
+<ul>
+<li>if you have malware samples or malicious documents with known obfuscation algorithms such as XOR, please <a href="http://www.decalage.info/contact">contact me</a>. That will help me a lot to improve bbcrack and bbharvest.</li>
+<li>if you know other strings, patterns, file headers useful for malware analysis that Balbuzard should support, or other obfuscation algorithms, please <a href="http://www.decalage.info/contact">contact me</a>.</li>
+</ul>
+<h2 id="documentation-pages">Documentation pages</h2>
+<ul>
+<li><a href="Home.html">Home</a></li>
+<li><a href="Demo.html">Demo</a></li>
+<li><a href="Installation.html">Installation</a></li>
+<li><a href="balbuzard.html">balbuzard</a></li>
+<li><a href="bbcrack.html">bbcrack</a></li>
+<li><a href="bbharvest.html">bbharvest</a></li>
+<li><a href="bbtrans.html">bbtrans</a></li>
+</ul>
+<h2 id="quick-links">Quick links:</h2>
+<ul>
+<li><a href="http://www.decalage.info/python/balbuzard">Balbuzard home page</a></li>
+<li><a href="http://bitbucket.org/decalage/balbuzard/downloads">Download</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/wiki">Documentation</a></li>
+<li><a href="http://www.decalage.info/contact">Contact</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/issues?status=new&amp;status=open">Report issues</a></li>
+<li><a href="https://twitter.com/decalage2">Updates on Twitter</a></li>
+</ul>
+<p>See <a href="http://www.decalage.info/python/balbuzard"><code class="url">http://www.decalage.info/python/balbuzard</code></a> for more info and other tools.</p>
+</body>
+</html>

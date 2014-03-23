@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<h1 id="bbtrans">bbtrans</h1>
+<p>bbtrans can apply any of the transforms from <a href="bbcrack.html">bbcrack</a> (XOR, ROL, ADD and various combinations) to a file.</p>
+<p>It is part of the <a href="http://www.decalage.info/python/balbuzard">Balbuzard</a> tools.</p>
+<h2 id="usage">Usage</h2>
+<pre><code>Usage: bbtrans.py [options] &lt;filename&gt;
+
+Options:
+  -h, --help            show this help message and exit
+  -t TRANSFORM, --transform=TRANSFORM
+                        transform to be applied (or &quot;-t list&quot; to display all
+                        available transforms)
+  -p PARAMS, --params=PARAMS
+                        parameters for transform (comma separated list)
+  -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
+                        if the file is a zip archive, open first file from it,
+                        using the provided password (requires Python 2.6+)</code></pre>
+<h2 id="how-to-select-input-files">How to select input files</h2>
+<p>See <a href="balbuzard.html">balbuzard</a>.</p>
+<h2 id="how-to-select-transforms">How to select transforms</h2>
+<p>Use the option -t, followed by the transform short name: see <a href="bbcrack.html">bbcrack</a>.</p>
+<h2 id="how-to-specify-parameters">How to specify parameters</h2>
+<p>Use the option -p, followed by one or several parameters corresponding to the transform. Parameters must be written in hexadecimal. If there are several parameters, use commas to separate them, without space.</p>
+<p>Output files will be created with the same name as input files, with the short name of the transform including parameters.</p>
+<p>Examples:</p>
+<pre><code>bbtrans.py sample.exe -t xor -p 4F</code></pre>
+<p>This will produce a file named sample_xor4F.exe.</p>
+<pre><code>bbtrans.py sample.exe -t xor_rol -p 4F,3</code></pre>
+<p>This will produce a file named sample_xor4F_rol3.exe.</p>
+<h2 id="how-to-extend-the-list-of-patterns-and-transforms">How to extend the list of patterns and transforms</h2>
+<p>See <a href="bbcrack.html">bbcrack</a>. Transforms and plugins are shared between <a href="bbcrack.html">bbcrack</a>, <a href="bbharvest.html">bbharvest</a> and bbtrans.</p>
+<h2 id="how-to-use-bbtrans-in-your-python-applications">How to use bbtrans in your python applications</h2>
+<p>TODO</p>
+<hr />
+<h2 id="documentation-pages">Documentation pages</h2>
+<ul>
+<li><a href="Home.html">Home</a></li>
+<li><a href="Installation.html">Installation</a></li>
+<li><a href="Demo.html">Demo</a></li>
+<li><a href="balbuzard.html">balbuzard</a></li>
+<li><a href="bbcrack.html">bbcrack</a></li>
+<li><a href="bbharvest.html">bbharvest</a></li>
+<li><a href="bbtrans.html">bbtrans</a></li>
+</ul>
+<h2 id="quick-links">Quick links:</h2>
+<ul>
+<li><a href="http://www.decalage.info/python/balbuzard">Balbuzard home page</a></li>
+<li><a href="http://bitbucket.org/decalage/balbuzard/downloads">Download</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/wiki">Documentation</a></li>
+<li><a href="http://www.decalage.info/contact">Contact</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/issues?status=new&amp;status=open">Report issues</a></li>
+<li><a href="https://twitter.com/decalage2">Updates on Twitter</a></li>
+</ul>
+</body>
+</html>

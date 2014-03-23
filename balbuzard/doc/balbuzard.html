@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<h1 id="balbuzard">balbuzard</h1>
+<p>balbuzard is a malware analysis tool to extract patterns of interest from malicious files, such as IP addresses, URLs, typical EXE strings and common file headers. It is part of the <a href="http://www.decalage.info/python/balbuzard">Balbuzard</a> tools.</p>
+<p>The idea is simple: When I need to analyse a malicious/suspicious file, the first thing I do is to open it into a hex viewer, to see which type of file it is with my own eyes. Then I quickly browse the file, looking for specific items of interest such as text, URLs, IP addresses, other embedded files, etc. This is very useful to decide how to analyse the file further, but also to extract evidence or potential <a href="http://www.openioc.org/">indicators of compromise (IOCs)</a>.</p>
+<p>But as soon as a file is larger than a few kilobytes, this can become very tedious, and you can overlook key details. This is why I wrote a simple script in 2007 called <a href="http://www.decalage.info/rescan">rescan</a> to search for a list of regular expressions matching specific patterns, published as open-source for the <a href="http://www.decalage.info/sstic08">SSTIC08 conference</a>. Since then I improved the tool significantly and renamed it to Balbuzard.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>search for string or regular expression patterns</li>
+<li>default set of patterns for malware analysis: IP addresses, e-mail addresses, URLs, typical EXE strings, common file headers, various malware strings</li>
+<li>optional use of the Yara engine and Yara rules as patterns</li>
+<li>includes Yara signatures from the <a href="https://code.google.com/p/malwarecookbook">Malware Analyst's Cookbook</a> (capabilities, packer and magic), <a href="http://aluigi.altervista.org/mytoolz.htm#signsrch">signsrch</a>/<a href="http://code.google.com/p/clamsrch/">clamsrch</a> (standard encryption constants) and <a href="https://github.com/AlienVault-Labs/AlienVaultLabs">AlienVault Labs</a> (malware signatures such as APT1).</li>
+<li>easily extensible with new patterns in python scripts and Yara rules</li>
+<li>CSV output</li>
+<li>batch analysis of multiple files/folders on disk or within zips</li>
+<li>command-line tool or python module</li>
+<li>can open malware in password-protected zip files without writing to disk</li>
+<li>pure python 2.x, no dependency or compilation</li>
+</ul>
+<p>Coming soon:</p>
+<ul>
+<li>XML and HTML outputs</li>
+<li>Unicode support</li>
+<li>Python 3.x support</li>
+</ul>
+<h2 id="how-does-it-work">How does it work?</h2>
+<p>Balbuzard looks for a number of patterns that correspond to items of interest when analyzing a malicious file. Each pattern can be a single string such as &quot;This program cannot be run in DOS mode&quot; which is present in most executable files on Windows, or a list of strings. It may also be a regular expression matching IP addresses, e-mail addresses or more complex patterns.</p>
+<p>Each found pattern is reported with its position, its length and value. With the -v option, a short hex dump can be displayed with a few bytes around the pattern.</p>
+<p>The list of patterns to look for can be easily extended by adding a python script in the plugins directory (see below).</p>
+<h2 id="usage">Usage</h2>
+<pre><code>Usage: balbuzard.py [options] &lt;filename&gt; [filename2 ...]
+
+Options:
+  -h, --help            show this help message and exit
+  -c CSV, --csv=CSV     export results to a CSV file
+  -v                    verbose display, with hex view.
+  -r                    find files recursively in subdirectories.
+  -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
+                        if the file is a zip archive, open first file from it,
+                        using the provided password (requires Python 2.6+)
+  -f ZIP_FNAME, --zipfname=ZIP_FNAME
+                        if the file is a zip archive, file(s) to be opened
+                        within the zip. Wildcards * and ? are supported.
+                        (default:*)</code></pre>
+<h2 id="how-to-select-input-files">How to select input files</h2>
+<p>You can specify one or several files to be analyzed:</p>
+<pre><code>balbuzard.py sample1.doc sample2.doc sample3.exe</code></pre>
+<p>Using wildcards, it is possible to scan several files in a folder:</p>
+<pre><code>balbuzard.py samples/*.bin</code></pre>
+<p>With the -r option, the search is recursive in all subfolders:</p>
+<pre><code>balbuzard.py malwarezoo/*.exe -r</code></pre>
+<p>When scanning several files at once, it is recommended to use the CSV output (see below).</p>
+<p>As many malware samples are stored in password-protected zip files, balbuzard is able to extract such files in memory to analyze them without writing to disk. This avoids being blocked by an antivirus. Use the option -z to specify the zip password:</p>
+<pre><code>balbuzard.py -z infected malwarezoo/sample123.zip</code></pre>
+<p>By default, all files in the zip archive are extracted and analyzed. You may use the option -f to select files within the zip archive. Wildcards are supported, and the search is recursive:</p>
+<pre><code>balbuzard.py -z infected malwarezoo/sample123.zip -f sample1.exe</code></pre>
+<p>For example, if you wanted to analyze all the <a href="http://contagiodump.blogspot.nl/2013/03/mandiant-apt1-samples-categorized-by.html">APT1 samples</a> available on the Contagio website, you could run this command:</p>
+<pre><code>balbuzard.py -z *** APT1_MALWARE_FAMILIES_samples.zip -f *sample*</code></pre>
+<h2 id="csv-output">CSV output</h2>
+<p>With the -c option, results can be written in a CSV file, suitable for further analysis:</p>
+<pre><code>balbuzard.py samples\*.bin -c results.csv</code></pre>
+<h2 id="verbose-output">Verbose output</h2>
+<p>With the -v option, each matched string is displayed with a hexadecimal dump:</p>
+<pre><code>C:\balbuzard&gt;balbuzard.py -v test.exe
+Loading plugin from plugins\bbz_sample_plugin.py
+Opening file test.exe
+Filetype according to magic: application/x-ms-dos-executable
+
+-------------------------------------------------------------------------------
+EXE PE DOS message:
+at 0000004E: &#39;This program cannot be run in DOS mode&#39;
+0020   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+0030   00 00 00 00 00 00 00 00 00 00 00 00 C0 00 00 00    ................
+0040   0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68    ........!..L.!Th
+0050   69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F    is program canno
+0060   74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20    t be run in DOS
+0070   6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 00    mode....$.......
+0080   39 24 37 DD 7D 45 59 8E 7D 45 59 8E 7D 45 59 8E    9$7.}EY.}EY.}EY.
+0090   5A 83 22 8E 7E 45 59 8E 7D 45 58 8E 7C 45 59 8E    Z.&quot;.~EY.}EX.|EY.
+
+-------------------------------------------------------------------------------
+Executable filename:
+at 00000296: &#39;USER32.dll&#39;
+0270   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+0280   88 02 00 00 00 00 00 00 F8 01 4D 65 73 73 61 67    ..........Messag
+0290   65 42 6F 78 41 00 55 53 45 52 33 32 2E 64 6C 6C    eBoxA.USER32.dll
+02A0   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+02B0   54 69 6E 79 20 45 58 45 00 00 00 00 54 68 69 73    Tiny EXE....This</code></pre>
+<h2 id="how-to-extend-the-library-of-patterns">How to extend the library of patterns</h2>
+<p>Additional patterns can be provided by creating plugin scripts written in Python: each script needs to be named bbz*.py, and placed in the plugins folder. Each plugin script should add a list of Pattern objects to the patterns list, for example:</p>
+<pre><code>    patterns += [
+        # example: a pattern with a simple case-INsensitive string
+        Pattern(&quot;EXE PE DOS message&quot;, &quot;This program cannot be run in DOS mode&quot;, nocase=True),
+        # example: a pattern with a list of strings
+        Pattern(&quot;EXE: section name&quot;, [&quot;.text&quot;, &quot;.data&quot;, &quot;.rdata&quot;, &quot;.rsrc&quot;])
+        # example: a pattern with a regular expression, case-insensitive
+        Pattern_re(&quot;Executable filename&quot;, r&quot;\w+\.(EXE|COM|VBS|JS|VBE|JSE|BAT|CMD|DLL|SCR)&quot;, nocase=True),
+        ]</code></pre>
+<p>See bbz_sample_plugin.py in the plugins folder for more examples.</p>
+<p>If <a href="http://code.google.com/p/yara-project/downloads/list">yara-python</a> is installed, you may also use Yara rules as patterns for Balbuzard. For this, simply copy Yara rules as .yara files in the plugins directory. See capabilities.yara as an example.</p>
+<p>To disable a plugin (python or yara), you can simply rename the file with an extension such as &quot;.disabled&quot;.</p>
+<p>If you develop useful plugin scripts and you would like me to reference them, or if you think about additional transforms that bbcrack should include, please <a href="http://www.decalage.info/contact">contact me</a>.</p>
+<h2 id="how-to-use-the-balbuzard-engine-in-your-python-applications">How to use the balbuzard engine in your python applications</h2>
+<p>TODO</p>
+<h2 id="what-are-the-differences-with-yara">What are the differences with Yara?</h2>
+<p>Balbuzard may look similar to <a href="http://code.google.com/p/yara-project">Yara</a>, which is also a tool to search specific patterns into malicious files. First, Balbuzard is simpler than Yara. Balbuzard's patterns are simple strings or regular expressions, whereas Yara supports more complex rules. Balbuzard is a simple and portable pure python script, whereas Yara contains C code that needs to be compiled or installed as a library. Second, Yara's original purpose is to &quot;identify and classify malware families&quot; aimed at detection, whereas Balbuzard is to extract specific patterns from files that are already known as malicious. So in the end I would say that both tools are complementary.</p>
+<p>Of course, it is possible to implement Balbuzard's set of patterns using Yara rules, and I plan to use the Yara engine as an option in the near future. It is already possible to use Yara rules to extend Balbuzard patterns.</p>
+<p>Back in 2007-2008 when I started developing this tool as rescan, Yara was not yet published. And since then, I kept it like this because I preferred to have a lightweight pure python script to develop other tools without requiring the installation of Yara.</p>
+<h2 id="other-similar-tools">Other similar tools</h2>
+<p>Besides Yara, the following tools may also be used to search specific patterns within files: <a href="http://aluigi.altervista.org/mytoolz.htm#signsrch">signsrch</a>, <a href="http://code.google.com/p/clamsrch/">clamsrch</a>, <a href="http://code.google.com/p/binwalk/">binwalk</a>.</p>
+<hr />
+<h2 id="documentation-pages">Documentation pages</h2>
+<ul>
+<li><a href="Home.html">Home</a></li>
+<li><a href="Installation.html">Installation</a></li>
+<li><a href="Demo.html">Demo</a></li>
+<li><a href="balbuzard.html">balbuzard</a></li>
+<li><a href="bbcrack.html">bbcrack</a></li>
+<li><a href="bbharvest.html">bbharvest</a></li>
+<li><a href="bbtrans.html">bbtrans</a></li>
+</ul>
+<h2 id="quick-links">Quick links:</h2>
+<ul>
+<li><a href="http://www.decalage.info/python/balbuzard">Balbuzard home page</a></li>
+<li><a href="http://bitbucket.org/decalage/balbuzard/downloads">Download</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/wiki">Documentation</a></li>
+<li><a href="http://www.decalage.info/contact">Contact</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/issues?status=new&amp;status=open">Report issues</a></li>
+<li><a href="https://twitter.com/decalage2">Updates on Twitter</a></li>
+</ul>
+</body>
+</html>
