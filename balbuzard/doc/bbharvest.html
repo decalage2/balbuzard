@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<h1 id="bbharvest">bbharvest</h1>
+<p>bbharvest extracts all patterns of interest found when applying transforms such as XOR, ROL, ADD and various combinations, trying all possible keys. It is especially useful when several keys or several transforms are used in a single file.</p>
+<p>bbharvest is part of the <a href="http://www.decalage.info/python/balbuzard">Balbuzard</a> tools.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>uses the <a href="balbuzard.html">balbuzard</a> engine and patterns, and <a href="bbcrack.html">bbcrack</a> transforms</li>
+<li>search for string or regular expression patterns</li>
+<li>default set of patterns for malware analysis: IP addresses, e-mail addresses, URLs, typical EXE strings, common file headers, various malware strings</li>
+<li>provided with a large number of obfuscation transforms such as XOR, ROL, ADD (including combined transforms)</li>
+<li>supports fast character-based transforms, or any file transform</li>
+<li>transforms easily extensible by python scripts</li>
+<li>effective on malware with multiple obfuscations/keys</li>
+<li>options to select which transforms to check</li>
+<li>CSV output</li>
+<li>can open malware in password-protected zip files without writing to disk</li>
+<li>pure python 2.x, no dependency or compilation</li>
+</ul>
+<p>Coming soon:</p>
+<ul>
+<li>patterns and transforms easily extensible by python scripts</li>
+<li>optional use of the Yara engine and Yara rules as patterns</li>
+<li>CSV and HTML outputs</li>
+<li>batch analysis of multiple files/folders</li>
+<li>Python 3.x support</li>
+</ul>
+<h2 id="how-does-it-work">How does it work?</h2>
+<p>While <a href="bbcrack.html">bbcrack</a> is great for malware obfuscated with a single transform and a single key, it might not be effective on malware using several transforms and/or several keys to obfuscate different parts or strings in a single file. For example a malware may use a different XOR key for each string. bbcrack may also fail if only specific strings are obfuscated, such as IP addresses.</p>
+<p>bbharvest is designed to address these cases, by trying all transforms and all keys, extracting specific patterns of interest that can be found. This way, even if a URL or an IP address is obfuscated with a transform and key used only once, it should be reported by bbharvest.</p>
+<p>However, bbharvest may return a lot of false positives. It is therefore necessary to analyze the results manually in order to extract meaningful data.</p>
+<p>By default the search is limited to level 1 transforms, for time reasons. You may increase the scope using the options -l or -i.</p>
+<h2 id="usage">Usage</h2>
+<pre><code>Usage: bbharvest.py [options] &lt;filename&gt;
+
+Options:
+  -h, --help            show this help message and exit
+  -l LEVEL, --level=LEVEL
+                        select transforms level 1, 2 or 3
+  -i INCLEVEL, --inclevel=INCLEVEL
+                        select transforms only with level 1, 2 or 3
+                        (incremental)
+  -c CSV, --csv=CSV     export results to a CSV file
+  -t TRANSFORM, --transform=TRANSFORM
+                        only check specific transforms (comma separated list,
+                        or &quot;-t list&quot; to display all available transforms)
+  -z ZIP_PASSWORD, --zip=ZIP_PASSWORD
+                        if the file is a zip archive, open first file from it,
+                        using the provided password (requires Python 2.6+)
+  -p                    profiling: measure time spent on each pattern.</code></pre>
+<p>Here is an example, using a sample file containing random bytes and several patterns obfuscated with various transforms:</p>
+<pre><code>&gt;bbharvest.py sample_multiple_transforms.bin
+
+Opening file sample_multiple_transforms.bin
+*** WARNING: harvest mode may return a lot of false positives!
+xor_BE: EXE MZ followed by PE at index C29, string=&#39;MZ\x90\x00\x03\x00\x00\x00\x
+04\x00\x00\x00\xff\xff\x00\x00\xb8\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\
+x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\
+x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x0e\x1f\xba\x0e\x00\
+xb4\t\xcd!\xb8\x01L\xcd!This program cannot be run in DOS mode.\r\r\n$\x00\x00\x
+00\x00\x00\x00\x009$7\xdd}EY\x8e}EY\x8e}EY\x8eZ\x83&quot;\x8e~EY\x8e}EX\x8e|EY\x8et=\
+xda\x8e|EY\x8et=\xc8\x8e|EY\x8eRich}EY\x8e\x00\x00\x00\x00\x00\x00\x00\x00PE\x00
+\x00&#39;
+xor_BE: Executable filename at index EBF, string=&#39;USER32.dll&#39;
+xor_BE: EXE: section name at index DE1, string=&#39;.text&#39;
+xor_BE: EXE: section name at index E31, string=&#39;.data&#39;
+xor_BE: EXE: section name at index E09, string=&#39;.rdata&#39;
+xor84_rol3: Executable filename at index 15B, string=&#39;k.Js&#39;
+xor88_rol5: IP address at index 400, string=&#39;198.168.17.42&#39;
+xorDB_rol2: e-mail address at index 5B9, string=&#39;o@9j.Ky&#39;
+rol3_addD6: URL (http/https/ftp) at index 80E, string=&#39;http://www.mybotnet.com/cc\x00&#39;
+rol3_addD6: Executable filename at index 819, string=&#39;mybotnet.com&#39;</code></pre>
+<p>In this example it appears that the file contains an embedded executable file obfuscated with XOR 0xBE, an IP address with XOR 88 ROL 5, and a URL with ROL 3 ADD D6.</p>
+<p>See also the 5 minutes <a href="Demo.html">Demo</a> for another example.</p>
+<h2 id="how-to-select-input-files">How to select input files</h2>
+<p>See <a href="balbuzard.html">balbuzard</a>.</p>
+<h2 id="csv-output">CSV output</h2>
+<p>Because bbharvest may find a lot of matching strings, often including false positives, it is very useful to write all results to a CSV file. Then it is easier to use a spreadsheet application to filter the results and highlight interesting strings. Example:</p>
+<pre><code>bbharvest.py sample.exe -c output.csv</code></pre>
+<h2 id="how-to-select-transforms">How to select transforms</h2>
+<p>See <a href="bbcrack.html">bbcrack</a>.</p>
+<h2 id="how-to-extend-the-list-of-patterns-and-transforms">How to extend the list of patterns and transforms</h2>
+<p>See bbcrack above. Transforms and plugins are shared between <a href="bbcrack.html">bbcrack</a>, bbharvest and <a href="bbtrans.html">bbtrans</a>.</p>
+<h2 id="are-there-other-similar-tools">Are there other similar tools?</h2>
+<p>For now, I haven't come across tools similar to bbharvest. If you find one, please <a href="http://www.decalage.info/contact">contact me</a>.</p>
+<hr />
+<h2 id="documentation-pages">Documentation pages</h2>
+<ul>
+<li><a href="Home.html">Home</a></li>
+<li><a href="Installation.html">Installation</a></li>
+<li><a href="Demo.html">Demo</a></li>
+<li><a href="balbuzard.html">balbuzard</a></li>
+<li><a href="bbcrack.html">bbcrack</a></li>
+<li><a href="bbharvest.html">bbharvest</a></li>
+<li><a href="bbtrans.html">bbtrans</a></li>
+</ul>
+<h2 id="quick-links">Quick links:</h2>
+<ul>
+<li><a href="http://www.decalage.info/python/balbuzard">Balbuzard home page</a></li>
+<li><a href="http://bitbucket.org/decalage/balbuzard/downloads">Download</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/wiki">Documentation</a></li>
+<li><a href="http://www.decalage.info/contact">Contact</a></li>
+<li><a href="https://bitbucket.org/decalage/balbuzard/issues?status=new&amp;status=open">Report issues</a></li>
+<li><a href="https://twitter.com/decalage2">Updates on Twitter</a></li>
+</ul>
+</body>
+</html>
