@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-balbuzard - v0.18 2014-02-24 Philippe Lagadec
+balbuzard - v0.19 2014-03-21 Philippe Lagadec
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
@@ -34,7 +34,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = '0.18'
+__version__ = '0.19'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -75,6 +75,7 @@ __version__ = '0.18'
 #                      - new option -f to find files within zips with wildcards
 # 2014-01-23 v0.17 PL: - Pattern: added partial support for filter function
 # 2014-02-24 v0.18 PL: - fixed bug with main_dir when balbuzard is imported
+# 2014-03-21 v0.19 PL: - fixed bug when Yara-python is not installed
 
 
 #------------------------------------------------------------------------------
@@ -613,6 +614,8 @@ if __name__ == '__main__':
         for f in rglob(plugins_dir, '*.yara'):  #glob.iglob('plugins/*.yara'):  # or bbz*.yara?
             print 'Loading yara plugin from', relpath(f, plugins_dir)
             yara_rules.append(yara.compile(f))
+    else:
+        yara_rules = None
 
     # open CSV file
     if options.csv:
