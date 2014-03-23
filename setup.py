@@ -13,6 +13,7 @@ to install this package.
 #--- CHANGELOG ----------------------------------------------------------------
 
 # 2014-02-26 v0.01: - first working version
+# 2014-03-23 v0.02: - added doc subfolder
 
 #--- TODO ---------------------------------------------------------------------
 
@@ -136,6 +137,8 @@ package_data={
         'README.html',
         ]
         + rglob('balbuzard/plugins', 'plugins', '*')
+        + rglob('balbuzard/doc', 'doc', '*.html')
+        + rglob('balbuzard/doc', 'doc', '*.md')
         + rglob('balbuzard/samples', 'samples', '*'),
     'balbuzard.thirdparty.magic': [
         'LICENSE.txt',
