@@ -269,9 +269,9 @@ class Transform_XOR (Transform_char):
         self.name = "XOR %02X" % params
         self.shortname = "xor%02X" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is an integer
-        return chr(ord(char) ^ self.params)
+        return i ^ self.params
 
     @staticmethod
     def iter_params ():
