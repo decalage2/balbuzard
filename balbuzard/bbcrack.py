@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-bbcrack - v0.12 2014-01-28 Philippe Lagadec
+bbcrack - v0.13 2014-04-09 Philippe Lagadec
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -37,7 +37,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.12'
+__version__ = '0.13'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -61,6 +61,7 @@ __version__ = '0.12'
 # 2014-01-20 v0.10 PL: - added Transform_ROL, added patterns for stage 1
 # 2014-01-23 v0.11 PL: - moved and merged patterns into patterns.py
 # 2014-01-28 v0.12 PL: - ignore transforms with null scores at the end of stage 2
+# 2014-04-09 v0.13 PL: - added transform_int to simplify char transforms
 
 
 #------------------------------------------------------------------------------
@@ -74,7 +75,6 @@ __version__ = '0.12'
 # + two stage regex, or string+regex, multiple strings, stop after 1 match
 # + move main code to functions
 # + test yara engine to see if faster
-# + transform classes: add transform_int method to avoid using ord/chr
 # - merge regex of same weight to improve speed?
 # - try acora for faster multi-string search, or other libraries?
 # - try pyre2 for faster regex search?
@@ -207,9 +207,24 @@ class Transform_char (Transform_string):
 
     def transform_char (self, char):
         """
-        Method to be overloaded, only for a transform that acts on a character.
+        Method that can be overloaded, only for a transform that acts on a character.
         This method should apply the transform to the provided char, using params
         as parameters, and return the transformed data as a character.
+        NOTE: it is usually simpler to overload transform_int and leave this one
+        untouched.
+        (here character = string of length 1)
+        """
+        # by default, call transform_int using ord(char), and convert it back
+        # to a single character:
+        return chr(self.transform_int(ord(char)))
+
+
+    def transform_int (self, i):
+        """
+        Method to be overloaded, only for a transform that acts on a character.
+        This method should apply the transform to the provided integer which is
+        the ASCII code of a character (i.e. ord(c)), using params
+        as parameters, and return the transformed data as an integer.
         (here character = string of length 1)
         """
         raise NotImplementedError
