@@ -66,6 +66,7 @@ __version__ = '0.13'
 
 #------------------------------------------------------------------------------
 #TODO
+# + Transform classes should have a name (short) and a description (long)
 # + improve display for stage 1 results (option to be more verbose?)
 # + patterns for stage 1 and 2 should be more coherent (include stage 1 results)
 # + -e option to encrypt output files with zip password
@@ -97,6 +98,7 @@ __version__ = '0.13'
 # add xor rol
 # base64
 # hex
+# LZNT1 when applicable?
 # split with two transforms
 # xor chained with previous char
 
