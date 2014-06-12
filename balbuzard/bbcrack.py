@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-bbcrack - v0.13 2014-04-09 Philippe Lagadec
+bbcrack - v0.14 2014-05-22 Philippe Lagadec
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -62,6 +62,7 @@ __version__ = '0.13'
 # 2014-01-23 v0.11 PL: - moved and merged patterns into patterns.py
 # 2014-01-28 v0.12 PL: - ignore transforms with null scores at the end of stage 2
 # 2014-04-09 v0.13 PL: - added transform_int to simplify char transforms
+# 2014-05-22 v0.14 PL: - simplified all Transform_chars with transform_int
 
 
 #------------------------------------------------------------------------------
@@ -570,10 +571,10 @@ class Transform_ROL (Transform_char):
         self.name = "ROL %d" % params
         self.shortname = "rol%d" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is an int
         rol_bits = self.params
-        return chr(rol(ord(char), rol_bits))
+        return rol(i, rol_bits)
 
     @staticmethod
     def iter_params ():
@@ -597,10 +598,10 @@ class Transform_XOR_ROL (Transform_char):
         self.name = "XOR %02X then ROL %d" % params
         self.shortname = "xor%02X_rol%d" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is a tuple
         xor_key, rol_bits = self.params
-        return chr(rol(ord(char) ^ xor_key, rol_bits))
+        return rol(i ^ xor_key, rol_bits)
 
     @staticmethod
     def iter_params ():
@@ -626,10 +627,10 @@ class Transform_ADD (Transform_char):
         self.name = "ADD %02X" % params
         self.shortname = "add%02X" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is an integer
         add_key = self.params
-        return chr((ord(char) + add_key) & 0xFF)
+        return (i + add_key) & 0xFF
 
     @staticmethod
     def iter_params ():
@@ -653,10 +654,10 @@ class Transform_ADD_ROL (Transform_char):
         self.name = "ADD %02X then ROL %d" % params
         self.shortname = "add%02X_rol%d" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is a tuple
         add_key, rol_bits = self.params
-        return chr(rol((ord(char) + add_key) & 0xFF, rol_bits))
+        return rol((i + add_key) & 0xFF, rol_bits)
 
     @staticmethod
     def iter_params ():
@@ -682,10 +683,10 @@ class Transform_ROL_ADD (Transform_char):
         self.name = "ROL %d then ADD %02X" % params
         self.shortname = "rol%d_add%02X" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is a tuple
         rol_bits, add_key = self.params
-        return chr((rol(ord(char), rol_bits) + add_key) & 0xFF)
+        return (rol(i, rol_bits) + add_key) & 0xFF
 
     @staticmethod
     def iter_params ():
@@ -711,10 +712,10 @@ class Transform_XOR_ADD (Transform_char):
         self.name = "XOR %02X then ADD %02X" % params
         self.shortname = "xor%02X_add%02X" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is a tuple
         xor_key, add_key = self.params
-        return chr(((ord(char) ^ xor_key) + add_key) & 0xFF)
+        return ((i ^ xor_key) + add_key) & 0xFF
 
     @staticmethod
     def iter_params ():
@@ -740,10 +741,10 @@ class Transform_ADD_XOR (Transform_char):
         self.name = "ADD %02X then XOR %02X" % params
         self.shortname = "add%02X_xor%02X" % params
 
-    def transform_char (self, char):
+    def transform_int (self, i):
         # here params is a tuple
         add_key, xor_key = self.params
-        return chr(((ord(char) + add_key) & 0xFF) ^ xor_key)
+        return ((i + add_key) & 0xFF) ^ xor_key
 
     @staticmethod
     def iter_params ():
