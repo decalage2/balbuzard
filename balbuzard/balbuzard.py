@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-balbuzard - v0.19 2014-03-21 Philippe Lagadec
+balbuzard - v0.20 2014-06-29 Philippe Lagadec
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
@@ -34,7 +34,7 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = '0.19'
+__version__ = '0.20'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -76,6 +76,7 @@ __version__ = '0.19'
 # 2014-01-23 v0.17 PL: - Pattern: added partial support for filter function
 # 2014-02-24 v0.18 PL: - fixed bug with main_dir when balbuzard is imported
 # 2014-03-21 v0.19 PL: - fixed bug when Yara-python is not installed
+# 2014-06-29 v0.20 PL: - simplified bbcrack transforms, added Yara signatures
 
 
 #------------------------------------------------------------------------------
@@ -528,7 +529,7 @@ def iter_files(files, recursive=False, zip_password=None, zip_fname='*'):
         iglob = glob.iglob
     for filespec in files:
         for filename in iglob(filespec):
-            if options.zip_password is not None:
+            if zip_password is not None:
                 # Each file is a zip archive:
                 print 'Opening zip archive %s with provided password' % filename
                 z = zipfile.ZipFile(filename, 'r')
