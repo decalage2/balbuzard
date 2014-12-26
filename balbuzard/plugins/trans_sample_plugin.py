@@ -1,32 +1,9 @@
 # This is a sample transform plugin script for bbcrack
 
+# See https://bitbucket.org/decalage/balbuzard/wiki/Transforms for more info
+
 # All transform plugin scripts need to be named trans*.py, in the plugins folder
 # Each plugin script should add Transform objects.
-
-# First define a new Transform class, inheriting either from Transform_char or
-# Transform_string:
-
-# - Transform_char: for transforms that apply to each character/byte
-#   independently, not depending on the location of the character.
-#   (example: simple XOR)
-# - Transform_string: for all other transforms, that may apply to several
-#   characters at once, or taking into account the location of the character.
-#   (example: XOR with increasing key)
-
-# Transform_char is usually much faster because it uses a translation table.
-
-# A class represents a generic transform (obfuscation algorithm), such as XOR
-# or XOR+ROL.
-# When the class is instantiated as an object, it includes the keys of the
-# obfuscation algorithm, specified as parameters. (e.g. "XOR 4F" or "XOR 4F +
-# ROL 3")
-
-# For each transform class, you need to implement the following methods/variables:
-# - a description and an short name for the transform
-# - __init__() to store parameters
-# - iter_params() to generate all the possible parameters for bruteforcing
-# - transform_char() or transform_string() to apply the transform to a single
-#   character or to the whole string at once.
 
 # Then do not forget to add to the proper level 1, 2 or 3. (see below after
 # class samples)
@@ -66,18 +43,18 @@
 ##        # this shortname will be used to save bbcrack and bbtrans results to files
 ##        self.shortname = "samplexor%02X" % params
 ##
-##    def transform_char (self, char):
+##    def transform_int (self, i):
 ##        """
 ##        Method to be overloaded, only for a transform that acts on a character.
-##        This method should apply the transform to the provided char, using params
-##        as parameters, and return the transformed data as a character.
-##        (here character = string of length 1)
+##        This method should apply the transform to the provided char (i is the
+##        ASCII code of the character), using params as parameters, and return
+##        the ASCII code of the transformed character.
 ##
 ##        NOTE: here the algorithm can be slow, because it will only be used 256
 ##        times to build a translation table.
 ##        """
 ##        # here params is an integer
-##        return chr(ord(char) ^ self.params)
+##        return i ^ self.params
 ##
 ##    @staticmethod
 ##    def iter_params ():
@@ -109,10 +86,11 @@
 ##        self.name = "XOR %02X then ROL %d" % params
 ##        self.shortname = "xor%02X_rol%d" % params
 ##
-##    def transform_char (self, char):
+##    def transform_int (self, i):
 ##        # here params is a tuple
 ##        xor_key, rol_bits = self.params
-##        return chr(rol(ord(char) ^ xor_key, rol_bits))
+##        # rol() is defined in bbcrack.py
+##        return rol(i ^ xor_key, rol_bits)
 ##
 ##    @staticmethod
 ##    def iter_params ():
@@ -173,5 +151,6 @@
 ##add_transform(Transform_SAMPLE_XOR_ROL, level=1)
 ##add_transform(Transform_SAMPLE_XOR_INC, level=2)
 
+# See https://bitbucket.org/decalage/balbuzard/wiki/Transforms for more info
 
-# see bbcrack.py and the Transform classes for more options.
+# see bbcrack.py and the Transform classes for more options and examples.
