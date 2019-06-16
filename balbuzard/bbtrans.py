@@ -12,8 +12,6 @@ License: BSD, see source code or documentation
 
 Project Repository: https://github.com/decalage2/balbuzard
 For more info and updates: http://www.decalage.info/balbuzard
-
-usage: bbtrans [options] <file>
 """
 # LICENSE:
 #

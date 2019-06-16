@@ -36,7 +36,7 @@ from balbuzard.balbuzard import __version__
 #--- METADATA -----------------------------------------------------------------
 
 name         = "balbuzard"
-version      = __version__
+version      = '0.20'
 desc         = "Malware analysis tools to extract patterns of interest from files and crack obfuscation such as XOR"
 long_desc    = open('balbuzard/README.txt').read()
 
@@ -225,6 +225,19 @@ package_data={
 #scripts = ["%s/cherrypy/cherryd" % setupdir]
 
 
+# --- ENTRY POINTS ------------------------------------------------------------
+
+# Entry points to create convenient scripts automatically
+
+entry_points = {
+    'console_scripts': [
+        'balbuzard=balbuzard.balbuzard:main',
+        'bbcrack=balbuzard.bbcrack:main',
+        'bbharvest=balbuzard.bbharvest:main',
+        'bbtrans=balbuzard.bbtrans:main',
+    ],
+}
+
 #=== MAIN =====================================================================
 
 def main():
@@ -257,6 +270,7 @@ def main():
         download_url=download_url,
 #        data_files=data_files,
 #        scripts=scripts,
+        entry_points=entry_points,
     )
 
 
