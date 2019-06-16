@@ -38,7 +38,8 @@ from balbuzard.balbuzard import __version__
 name         = "balbuzard"
 version      = '0.20'
 desc         = "Malware analysis tools to extract patterns of interest from files and crack obfuscation such as XOR"
-long_desc    = open('balbuzard/README.txt').read()
+with open('README.md') as readme:
+    long_desc    = readme.read()
 
 author       = "Philippe Lagadec"
 author_email = "decalage at laposte dot net"
@@ -259,9 +260,10 @@ def main():
         version=version,
         description=desc,
         long_description=long_desc,
+        long_description_content_type="text/markdown",
         classifiers=classifiers,
         author=author,
-        author_email=author_email,
+        # author_email=author_email,
         url=url,
         license=license,
 ##        package_dir=package_dir,
