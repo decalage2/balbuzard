@@ -1,19 +1,23 @@
 #! /usr/bin/env python2
 """
-bbtrans - v0.03 2014-01-20 Philippe Lagadec
+bbtrans
 
 bbtrans is a tool to apply a transform such as XOR, ROL, ADD (and many
 combinations) to a file. This is useful to deobfuscate malware when the
 obfuscation scheme is known, or to test bbcrack.
 It is part of the Balbuzard package.
 
+Author: Philippe Lagadec - http://www.decalage.info
+License: BSD, see source code or documentation
+
+Project Repository: https://github.com/decalage2/balbuzard
 For more info and updates: http://www.decalage.info/balbuzard
 
 usage: bbtrans [options] <file>
 """
 # LICENSE:
 #
-# bbtrans is copyright (c) 2013-2014, Philippe Lagadec (http://www.decalage.info)
+# bbtrans is copyright (c) 2013-2019, Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -42,6 +46,9 @@ usage: bbtrans [options] <file>
 # 2013-03-28 v0.01 PL: - first version
 # 2013-12-09 v0.02 PL: - use hex for params instead of decimal
 # 2014-01-20 v0.03 PL: - use function from bbcrack to list transforms
+# 2019-06-16 v0.20 PL: - added main function for pip entry points (issue #8)
+
+__version__ = '0.20'
 
 #------------------------------------------------------------------------------
 # TODO:
@@ -54,8 +61,7 @@ from bbcrack import *
 
 import sys, optparse
 
-if __name__ == '__main__':
-
+def main():
     usage = 'usage: %prog [options] <filename>'
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("-t", "--transform", dest='transform', type='str', default=None,
@@ -119,3 +125,6 @@ if __name__ == '__main__':
             trans_data = transform.transform_string(raw_data)
             open(trans_fname, 'wb').write(trans_data)
 
+
+if __name__ == '__main__':
+    main()

@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-bbharvest - v0.05 2014-01-06 Philippe Lagadec
+bbharvest
 
 bbharvest is a tool to analyse malware that uses obfuscation such as XOR, ROL,
 ADD (and many combinations) to hide information such as IP addresses, domain
@@ -10,12 +10,16 @@ It tries all possible keys of selected transforms and extracts all patterns of
 interest using the balbuzard engines.
 It is part of the Balbuzard package.
 
+Author: Philippe Lagadec - http://www.decalage.info
+License: BSD, see source code or documentation
+
+Project Repository: https://github.com/decalage2/balbuzard
 For more info and updates: http://www.decalage.info/balbuzard
 """
 
 # LICENSE:
 #
-# bbharvest is copyright (c) 2013-2014, Philippe Lagadec (http://www.decalage.info)
+# bbharvest is copyright (c) 2013-2019, Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -39,7 +43,6 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.05'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -51,7 +54,9 @@ __version__ = '0.05'
 # 2014-01-04 v0.04 PL: - use functions from bbcrack to simplify main
 #                      - added -i option for incremental level
 # 2014-01-06 v0.05 PL: - added the possibility to write transform plugins
+# 2019-06-16 v0.20 PL: - added main function for pip entry points (issue #8)
 
+__version__ = '0.20'
 
 #------------------------------------------------------------------------------
 # TODO:
@@ -148,8 +153,7 @@ def harvest (raw_data, transform_classes, filename, profiling=False,
 
 #=== MAIN =====================================================================
 
-if __name__ == '__main__':
-
+def main():
     usage = 'usage: %prog [options] <filename>'
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-l', '--level', dest='level', type='int', default=1,
@@ -204,5 +208,7 @@ if __name__ == '__main__':
         csv_writer=csv_writer)
 
 
+if __name__ == '__main__':
+    main()
 
 # This was coded while listening to Mogwai "The Hawk Is Howling".

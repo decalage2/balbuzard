@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-bbcrack - v0.14 2014-05-22 Philippe Lagadec
+bbcrack
 
 bbcrack is a tool to crack malware obfuscation such as XOR, ROL, ADD (and
 many combinations), by bruteforcing all possible keys and and checking for
@@ -8,12 +8,16 @@ specific patterns (IP addresses, domain names, URLs, known file headers and
 strings, etc) using the balbuzard engine.
 It is part of the Balbuzard package.
 
+Author: Philippe Lagadec - http://www.decalage.info
+License: BSD, see source code or documentation
+
+Project Repository: https://github.com/decalage2/balbuzard
 For more info and updates: http://www.decalage.info/balbuzard
 """
 
 # LICENSE:
 #
-# bbcrack is copyright (c) 2013-2014, Philippe Lagadec (http://www.decalage.info)
+# bbcrack is copyright (c) 2013-2019, Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -37,7 +41,6 @@ For more info and updates: http://www.decalage.info/balbuzard
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-__version__ = '0.13'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -63,7 +66,9 @@ __version__ = '0.13'
 # 2014-01-28 v0.12 PL: - ignore transforms with null scores at the end of stage 2
 # 2014-04-09 v0.13 PL: - added transform_int to simplify char transforms
 # 2014-05-22 v0.14 PL: - simplified all Transform_chars with transform_int
+# 2019-06-16 v0.20 PL: - added main function for pip entry points (issue #8)
 
+__version__ = '0.20'
 
 #------------------------------------------------------------------------------
 #TODO
@@ -901,8 +906,7 @@ def load_plugins ():
 
 #=== MAIN =====================================================================
 
-if __name__ == '__main__':
-
+def main():
     usage = 'usage: %prog [options] <filename>'
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-l', '--level', dest='level', type='int', default=2,
@@ -1025,6 +1029,9 @@ if __name__ == '__main__':
             print 'saving to file', fname_trans
             open(fname_trans, 'wb').write(data)
 
+
+if __name__ == '__main__':
+    main()
 
 
 # This was coded while listening to The Walkmen "Heaven".
