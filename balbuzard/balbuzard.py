@@ -1,17 +1,21 @@
 #! /usr/bin/env python2
 """
-balbuzard - v0.20 2014-06-29 Philippe Lagadec
+balbuzard
 
 Balbuzard is a tool to quickly extract patterns from suspicious files for
 malware analysis (IP addresses, domain names, known file headers and strings,
 etc).
 
+Author: Philippe Lagadec - http://www.decalage.info
+License: BSD, see source code or documentation
+
+Project Repository: https://github.com/decalage2/balbuzard
 For more info and updates: http://www.decalage.info/balbuzard
 """
 
 # LICENSE:
 #
-# balbuzard is copyright (c) 2007-2014, Philippe Lagadec (http://www.decalage.info)
+# balbuzard is copyright (c) 2007-2019, Philippe Lagadec (http://www.decalage.info)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -33,8 +37,6 @@ For more info and updates: http://www.decalage.info/balbuzard
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-__version__ = '0.20'
 
 #------------------------------------------------------------------------------
 # CHANGELOG:
@@ -77,6 +79,9 @@ __version__ = '0.20'
 # 2014-02-24 v0.18 PL: - fixed bug with main_dir when balbuzard is imported
 # 2014-03-21 v0.19 PL: - fixed bug when Yara-python is not installed
 # 2014-06-29 v0.20 PL: - simplified bbcrack transforms, added Yara signatures
+# 2019-06-16       PL: - added main function for pip entry points (issue #8)
+
+__version__ = '0.20'
 
 
 #------------------------------------------------------------------------------
@@ -579,8 +584,7 @@ del d
 
 #=== MAIN =====================================================================
 
-if __name__ == '__main__':
-
+def main():
     usage = 'usage: %prog [options] <filename> [filename2 ...]'
     parser = optparse.OptionParser(usage=usage)
 ##    parser.add_option('-o', '--outfile', dest='outfile',
@@ -643,5 +647,8 @@ if __name__ == '__main__':
     if options.csv:
         csvfile.close()
 
+
+if __name__ == '__main__':
+    main()
 
 # This was coded while listening to The National "Boxer".
