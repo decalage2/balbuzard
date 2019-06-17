@@ -1,34 +1,62 @@
 Balbuzard
 =========
 
-[Balbuzard](http://www.decalage.info/python/balbuzard) is a package of malware analysis tools in python to **extract patterns of interest from suspicious files** (IP addresses, domain names, known file headers, interesting strings, etc). 
+[Balbuzard](http://www.decalage.info/python/balbuzard) is a package of malware analysis tools in python 
+to **extract patterns of interest from suspicious files** (IP addresses, domain names, known file headers, 
+interesting strings, etc). 
 
 It can also **crack malware obfuscation** such as XOR, ROL, etc by bruteforcing and checking for those patterns.
 
-Quick links: [Download](http://bitbucket.org/decalage/balbuzard/downloads) - [Install](https://bitbucket.org/decalage/balbuzard/wiki/Installation) - [Documentation](https://bitbucket.org/decalage/balbuzard/wiki) - [Contact](http://www.decalage.info/contact) - [Report issues](https://bitbucket.org/decalage/balbuzard/issues?status=new&status=open) - [Updates on Twitter](https://twitter.com/decalage2)
+Quick links: 
+[Download/Install](#download-and-install) - 
+[Documentation](https://bitbucket.org/decalage/balbuzard/wiki) - 
+[Contact](http://www.decalage.info/contact) - 
+[Report issues](https://github.com/decalage2/balbuzard/issues) - 
+[Updates on Twitter](https://twitter.com/decalage2)
 
 ## Balbuzard tools:
 
-- [balbuzard](https://bitbucket.org/decalage/balbuzard/wiki/balbuzard/) is a tool to extract patterns of interest from malicious files, such as IP addresses, URLs, embedded files and typical malware strings. It is easily extensible with new  patterns, regular expressions and Yara rules.
-- [bbcrack](https://bitbucket.org/decalage/balbuzard/wiki/bbcrack/) uses a new algorithm based on patterns of interest to bruteforce typical malware [obfuscation](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) such as XOR, ROL, ADD and various combinations, in order to guess which algorithms/keys have been used. 
-- [bbharvest](https://bitbucket.org/decalage/balbuzard/wiki/bbharvest/) extracts all patterns of interest found when applying typical malware [obfuscation transforms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) such as XOR, ROL, ADD and various combinations, trying all possible keys. It is especially useful when several keys or several transforms are used in a single file.
-- [bbtrans](https://bitbucket.org/decalage/balbuzard/wiki/bbtrans/) can apply any of the [transforms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) from bbcrack (XOR, ROL, ADD and various combinations) to a file.
+- [balbuzard](https://bitbucket.org/decalage/balbuzard/wiki/balbuzard/) is a tool to extract patterns of interest from 
+  malicious files, such as IP addresses, URLs, embedded files and typical malware strings. It is easily extensible with 
+  new  patterns, regular expressions and Yara rules.
+- [bbcrack](https://bitbucket.org/decalage/balbuzard/wiki/bbcrack/) uses a new algorithm based on patterns of interest 
+  to bruteforce typical malware [obfuscation](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) such as XOR, 
+  ROL, ADD and various combinations, in order to guess which algorithms/keys have been used. 
+- [bbharvest](https://bitbucket.org/decalage/balbuzard/wiki/bbharvest/) extracts all patterns of interest found when 
+   applying typical malware [obfuscation transforms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) such as 
+   XOR, ROL, ADD and various combinations, trying all possible keys. It is especially useful when several keys or 
+   several transforms are used in a single file.
+- [bbtrans](https://bitbucket.org/decalage/balbuzard/wiki/bbtrans/) can apply any of the 
+  [transforms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) from bbcrack (XOR, ROL, ADD and various 
+  combinations) to a file.
 
 ## When to use these tools:
 
-- If you need to analyze a new malicious file, you can first try [balbuzard](https://bitbucket.org/decalage/balbuzard/wiki/balbuzard/) to extract strings/patterns of interest and detect embedded files in cleartext.
-- Then if you think the malicious file might use an [obfuscation algorithm](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) such as XOR to hide interesting data (e.g. an embedded executable file), try [bbcrack](https://bitbucket.org/decalage/balbuzard/wiki/bbcrack/) to find the algorithm and the key(s).
-- Alternatively, if bbcrack is not successful, or if you think the file may use several [algorithms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) and/or keys, try [bbharvest](https://bitbucket.org/decalage/balbuzard/wiki/bbharvest/). bbharvest is especially targeted at single strings obfuscated within an executable or malicious file.
+- If you need to analyze a new malicious file, you can first try 
+  [balbuzard](https://bitbucket.org/decalage/balbuzard/wiki/balbuzard/) to extract strings/patterns of interest and 
+  detect embedded files in cleartext.
+- Then if you think the malicious file might use an 
+  [obfuscation algorithm](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) such as XOR to hide interesting 
+  data (e.g. an embedded executable file), try [bbcrack](https://bitbucket.org/decalage/balbuzard/wiki/bbcrack/) to 
+  find the algorithm and the key(s).
+- Alternatively, if bbcrack is not successful, or if you think the file may use several 
+  [algorithms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms) and/or keys, try 
+  [bbharvest](https://bitbucket.org/decalage/balbuzard/wiki/bbharvest/). bbharvest is especially targeted at single 
+  strings obfuscated within an executable or malicious file.
 
 
 ## 5 minutes demo
 
-See the [Demo](https://bitbucket.org/decalage/balbuzard/wiki/Demo/) page to see examples and test the tools by yourself in a few minutes using the provided samples.
+See the [Demo](https://bitbucket.org/decalage/balbuzard/wiki/Demo/) page to see examples and test the tools by yourself 
+in a few minutes using the provided samples.
 
 ## Help wanted: 
 
-- if you have malware samples or malicious documents with known obfuscation algorithms such as XOR, please [contact me](http://www.decalage.info/contact). That will help me a lot to improve bbcrack and bbharvest.
-- if you know other strings, patterns, file headers useful for malware analysis that Balbuzard should support, or other [obfuscation algorithms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms), please [contact me](http://www.decalage.info/contact).
+- if you have malware samples or malicious documents with known obfuscation algorithms such as XOR, please 
+  [contact me](http://www.decalage.info/contact). That will help me a lot to improve bbcrack and bbharvest.
+- if you know other strings, patterns, file headers useful for malware analysis that Balbuzard should support, or 
+  other [obfuscation algorithms](https://bitbucket.org/decalage/balbuzard/wiki/Transforms), please 
+  [contact me](http://www.decalage.info/contact).
 
 
 See <http://www.decalage.info/python/balbuzard> for more info and other tools.
@@ -39,7 +67,10 @@ See <http://www.decalage.info/python/balbuzard> for more info and other tools.
 
 Follow all updates and news on Twitter: <https://twitter.com/decalage2>
 
-- **2014-05-22: Balbuzard v0.19 included in [REMnux v5](http://blog.zeltser.com/post/86508269224/remnux-v5-release-for-malware-analysts)**, pre-installed and ready to use.
+- **2019-06-16 v0.20**: added pip entry points to simplify installation and usage 
+- 2014-05-22: Balbuzard v0.19 included in 
+  [REMnux v5](http://blog.zeltser.com/post/86508269224/remnux-v5-release-for-malware-analysts), pre-installed and ready 
+  to use.
 - 2014-03-23 v0.19: bugfix when Yara is not installed, improved [documentation](https://bitbucket.org/decalage/balbuzard/wiki).
 - 2014-02-26 v0.18: Initial release of Balbuzard tools
 - 2013-03-15: added harvest mode (bbharvest)
@@ -49,27 +80,37 @@ Follow all updates and news on Twitter: <https://twitter.com/decalage2>
 - see changelog in source code for more info.
 
 
-# Download
+# Download and Install
 
-The archive is available on [the project page on Bitbucket](https://bitbucket.org/decalage/balbuzard/downloads).
+The easiest way is to use pip:
+```
+pip2 install -U balbuzard
+```
 
-
-# Installation
+Notes:
+- For now, balbuzard only runs on Python 2. So you may need to use `pip2` instead of `pip`, if Python 3 is the default 
+  on your system.
+- on Linux/Mac/Unix, add `sudo -H` in front of pip.
 
 See the [installation instructions](https://bitbucket.org/decalage/balbuzard/wiki/Installation).
 
 
 # How to contribute / report bugs / ask for help:
 
-These are open-source tools developed on my spare time. Any contribution such as code improvements, ideas, bug reports, additional patterns or transforms would be highly appreciated. You may contact me using [this online form](http://www.decalage.info/contact), by e-mail (decalage at laposte.net) or use the [issue page on Bitbucket](https://bitbucket.org/decalage/balbuzard/issues?status=new&status=open) to report bugs/ideas, or clone the project then send me pull requests to suggest changes.
+These are open-source tools developed on my spare time. Any contribution such as code improvements, ideas, bug reports, 
+additional patterns or transforms would be highly appreciated. 
+You may contact me using [this online form](http://www.decalage.info/contact), by e-mail (decalage at laposte.net) or 
+use the [issue page on GitHub](https://github.com/decalage2/balbuzard/issues) to report bugs/ideas, or clone the 
+project then send me pull requests to suggest changes.
 
 
 License
 =======
 
-This license applies to the whole Balbuzard package including balbuzard, bbcrack, bbharvest and bbtrans, apart from the thirdparty and plugins folders which contain third-party files published with their own license.
+This license applies to the whole Balbuzard package including balbuzard, bbcrack, bbharvest and bbtrans, 
+apart from the thirdparty and plugins folders which contain third-party files published with their own license.
 
-The Balbuzard package is copyright (c) 2007-2014, Philippe Lagadec (http://www.decalage.info)
+The Balbuzard package is copyright (c) 2007-2019, Philippe Lagadec (http://www.decalage.info)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
