@@ -376,7 +376,7 @@ class Balbuzard (object):
             if count:
                 yield pattern, count
 
-    def scan_display (self, data, filename, hexdump=False, csv_writer=None):
+    def scan_display (self, data, filename, hexdump=False, csv_writer=None, long_strings=False):
         """
         Scans data for all patterns, displaying an hexadecimal dump for each
         match on the console (if hexdump=True), or one line for each
@@ -389,7 +389,7 @@ class Balbuzard (object):
             for index, match in matches:
                 # limit matched string display to 50 chars:
                 m = repr(match)
-                if len(m)> 50:
+                if len(m)> 50 and not long_strings:
                     m = m[:24]+'...'+m[-23:]
                 if hexdump:
                     print "at %08X: %s" % (index, m)
@@ -599,6 +599,7 @@ def main():
         help='if the file is a zip archive, open first file from it, using the provided password (requires Python 2.6+)')
     parser.add_option("-f", "--zipfname", dest='zip_fname', type='str', default='*',
         help='if the file is a zip archive, file(s) to be opened within the zip. Wildcards * and ? are supported. (default:*)')
+    parser.add_option("-l", "--long-strings", action="store_true", dest='long_strings', help='do not shorten strings found.')
 
     (options, args) = parser.parse_args()
 
@@ -641,7 +642,7 @@ def main():
         if MAGIC:
             print "Filetype according to magic: %s\n" % magic.whatis(data)
         bbz = Balbuzard(patterns, yara_rules=yara_rules)
-        bbz.scan_display(data, filename, hexdump=options.verbose, csv_writer=csv_writer)
+        bbz.scan_display(data, filename, hexdump=options.verbose, csv_writer=csv_writer, long_strings=options.long_strings)
 
     # close CSV file
     if options.csv:
